@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>녹취록</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding:wght@400;700&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -13,6 +16,22 @@
   font-weight: 300;
   font-style: normal;
   font-display: swap;
+}
+
+@font-face {
+  font-family: 'nokchilog_3';
+  src: url('./nokchilog_3-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+/* 한글만 size-adjust로 축소 */
+@font-face {
+  font-family: 'Nanum Gothic Coding';
+  src: local('Nanum Gothic Coding');
+  unicode-range: U+AC00-D7A3, U+1100-11FF, U+3130-318F, U+A960-A97F, U+D7B0-D7FF;
+  size-adjust: 80%;
 }
 
 @font-face {
@@ -28,12 +47,12 @@
   --white: #FFFFFF;
   --caption: #FFFFFF;
   --border: rgba(255,255,255,0.1);
-  --mono: 'MonoplexKR', 'Courier New', Courier, monospace;
-  --sans: 'MonoplexKR', 'Helvetica Neue', 'Apple SD Gothic Neo', Arial, sans-serif;
+  --mono: 'Nanum Gothic Coding', 'Courier New', Courier, monospace;
+  --sans: 'Nanum Gothic Coding', 'Helvetica Neue', 'Apple SD Gothic Neo', Arial, sans-serif;
   /* MonoplexKR type spec */
-  --mono-size: 14px;
+  --mono-size: 13px;
   --mono-lh: 18.2px;
-  --mono-ls: -0.015em;
+  --mono-ls: 0.04em;
 }
 
 /* MonoplexKR 전역 스펙 */
@@ -54,7 +73,7 @@
 html, body {
   background: var(--bg);
   color: var(--white);
-  font-family: 'Archivo', 'MonoplexKR', sans-serif;
+  font-family: 'Archivo', 'Nanum Gothic Coding', sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   overflow-x: hidden;
@@ -92,116 +111,193 @@ html, body {
 /* ══════════════════════════════════
    BOTTOM FIXED NAV
 ══════════════════════════════════ */
-.bottom-nav {
+/* ── 하단 네비 래퍼 ── */
+.nav-wrap {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 200;
-  height: 36px;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 메인 네비 행 */
+.bottom-nav {
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
-  background: #000;
+  gap: 24px;
+  background: none;
+  padding: 0 20px;
+  pointer-events: none;
 }
 
 .nav-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-family: 'Archivo', sans-serif;
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0.12em;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.4);
   cursor: pointer;
   border: none;
   background: none;
   transition: color 0.15s;
   padding: 0;
+  pointer-events: auto;
+}
+.nav-item:hover, .nav-item.active { color: var(--white); }
+
+/* nav-item 트랜지션 */
+.nav-item {
+  transition: opacity 0.22s ease, color 0.15s;
+}
+/* 서치 열릴 때 두 단어 페이드아웃 (제자리) */
+.nav-wrap.search-open .nav-item {
+  opacity: 0;
+  pointer-events: none;
 }
 
-.nav-item:hover { color: var(--white); }
-.nav-item.active { color: var(--white); }
-
-/* SEARCH 아이템 */
-.nav-search-inner {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.nav-search-label {
-  font-family: 'Archivo', sans-serif;
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: inherit;
-  flex-shrink: 0;
-}
-
-.nav-search-line {
-  width: 40px;
-  height: 1px;
-  background: rgba(255,255,255,0.2);
-  position: relative;
-  overflow: hidden;
-}
-
-.nav-search-line::after {
-  content: '';
+/* 돋보기 아이콘 — nav-item과 동일 위계, 오른쪽 고정 */
+.nav-search-btn {
   position: absolute;
-  left: -100%; top: 0;
-  width: 100%; height: 100%;
-  background: var(--white);
-  transition: left 0.3s ease;
+  right: 20px;
+  font-size: 20px;
+  line-height: 1;
+  color: rgba(255,255,255,0.4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  pointer-events: auto;
+  transition: color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+.nav-search-btn:hover,
+.nav-search-btn.active { color: var(--white); }
+.nav-search-btn .icon-search { display: inline; }
+.nav-search-btn .icon-back   { display: none; font-size: 18px; }
+.nav-search-btn.active .icon-search { display: none; }
+.nav-search-btn.active .icon-back   { display: inline; }
 
-.nav-item.active .nav-search-line::after { left: 0; }
+/* ── 서치 인풋 오버레이 — 같은 행, 두 단어 자리에 치환 ── */
+.nav-search-overlay {
+  position: absolute;
+  left: 20px;
+  right: 52px;
+  top: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.nav-wrap.search-open .nav-search-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+.nav-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 1.5px solid rgba(255,255,255,0.5);
+  outline: none;
+  font-family: 'Archivo', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--white);
+  padding-bottom: 3px;
+}
+.nav-search-input::placeholder { color: rgba(255,255,255,0.3); }
 
-.nav-search-icon {
-  font-size: 11px;
-  color: inherit;
+/* 검색 오버레이 — 비활성화 */
+.search-overlay { display: none; }
+.nav-search-inner, .nav-search-label, .nav-search-input-wrap,
+.nav-search-line, .nav-search-icon { display: none; }
+
+.s-overlay-input {
+  background: none;
+  border: none;
+  outline: none;
+  font-family: 'Archivo', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--white);
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+}
+.s-overlay-input::placeholder { color: rgba(255,255,255,0.3); }
+.s-overlay-clear {
+  font-size: 11px; color: rgba(255,255,255,0.4);
+  cursor: pointer; background: none; border: none;
+  font-family: var(--mono); flex-shrink: 0; display: none; padding: 0;
+}
+.s-overlay-clear.on { display: block; }
+
+.s-panel-label {
+  font-family: 'Archivo', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--white);
   flex-shrink: 0;
 }
 
-/* 검색 오버레이 */
-.search-overlay {
-  position: fixed;
-  bottom: 36px; left: 0; right: 0;
-  z-index: 199;
-  padding: 0 24px;
-  background: #000;
-  height: 0;
-  overflow: hidden;
-  transition: height 0.2s ease;
+.s-input-row {
+  flex: 1;
   display: flex;
   align-items: center;
+  border-bottom: 1.5px solid var(--white);
+  padding-bottom: 2px;
 }
 
-.search-overlay.open {
-  height: 44px;
+.s-icon {
+  font-size: 18px;
+  color: var(--white);
+  flex-shrink: 0;
+  line-height: 1;
+  margin-left: 8px;
 }
 
 .s-overlay-input {
-  width: 100%;
+  flex: 1;
   background: none;
   border: none;
   outline: none;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 300;
   color: var(--white);
-  letter-spacing: 0.06em;
+  letter-spacing: var(--mono-ls);
+  padding: 0;
 }
 
-.s-overlay-input::placeholder { color: rgba(255,255,255,0.18); }
+.s-overlay-input::placeholder {
+  color: rgba(255,255,255,0.3);
+}
 
 .s-overlay-clear {
-  font-size: 9px; color: rgba(255,255,255,0.25);
-  cursor: pointer; background: none; border: none;
-  font-family: var(--mono); flex-shrink: 0;
+  font-family: 'Archivo', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+  cursor: pointer;
+  background: none;
+  border: none;
+  flex-shrink: 0;
   display: none;
+  padding: 0;
+  mix-blend-mode: screen;
 }
 .s-overlay-clear.on { display: block; }
 
@@ -212,11 +308,12 @@ html, body {
 /* 스크롤 컨테이너 */
 .main-scroll {
   padding: 80px 0 120px;
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
 }
 
 /* 각 식물 항목 */
 .plant-item {
-  margin-bottom: 120px;
+  margin-bottom: 200px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -225,18 +322,34 @@ html, body {
 
 .plant-item:hover .item-img { opacity: 0; }
 .plant-item:hover .item-ascii { opacity: 1; }
+.plant-item.ascii-active .item-img { opacity: 0; }
+.plant-item.ascii-active .item-ascii { opacity: 1; }
 
 /* 이미지 컨테이너 — 중앙 정렬, 폭 제한 */
 .item-img-wrap {
   position: relative;
-  width: 32vw;
-  max-width: 420px;
-  min-width: 200px;
+  width: 60vw;
+  max-width: 680px;
+  min-width: 280px;
   overflow: hidden;
 }
 
 @media (max-width: 600px) {
-  .item-img-wrap { width: 70vw; }
+  .item-img-wrap {
+    width: calc(100vw - 32px);
+    max-width: none;
+    min-width: 0;
+  }
+  .plant-item {
+    margin-bottom: 200px;
+  }
+  .item-caption {
+    padding: 0 16px;
+  }
+  :root {
+    --mono-size: 12px;
+    --mono-lh: 16.2px;
+  }
 }
 
 .item-img {
@@ -269,20 +382,25 @@ html, body {
   letter-spacing: -0.04em;
 }
 
-/* 캡션 — 이미지 아래, 가운데 정렬, 소문자, 모노 */
+/* 캡션 — 이미지 아래, 가운데 정렬 */
 .item-caption {
-  margin-top: 20px;
+  margin-top: 40px;
   text-align: center;
-  line-height: 1.8;
 }
 
-.item-caption-line {
+.item-caption-row {
   display: block;
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-weight: 300;
+  font-size: var(--mono-size);
+  line-height: var(--mono-lh);
+  letter-spacing: var(--mono-ls);
+  color: var(--white);
   text-transform: uppercase;
-  color: var(--caption);
+}
+
+.item-caption-row .lbl {
+  color: rgba(255,255,255,0.55);
 }
 
 .item-caption-copy {
@@ -409,13 +527,35 @@ html, body {
 .a-card:hover .a-img { opacity: 0; }
 .a-card:hover .a-ascii { opacity: 1; }
 
+.a-imgs {
+  position: absolute; inset: 0;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.a-imgs::-webkit-scrollbar { display: none; }
+
 .a-img {
+  flex: 0 0 100%;
   width: 100%; height: 100%;
   object-fit: cover;
-  display: block;
-  position: absolute; inset: 0;
+  scroll-snap-align: start;
   transition: opacity 0.04s;
 }
+
+.a-dots {
+  position: absolute; bottom: 6px; left: 0; right: 0;
+  display: flex; justify-content: center; gap: 4px;
+  pointer-events: none; z-index: 2;
+}
+.a-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  transition: background 0.2s;
+}
+.a-dot.on { background: #fff; }
 
 .a-ascii {
   position: absolute; inset: 0;
@@ -760,29 +900,31 @@ input[type=range]::-webkit-slider-thumb {
 <body>
 
 <!-- ═══ BOTTOM NAV ═══ -->
-<nav class="bottom-nav">
-  <button class="nav-item active" id="navLogo" onclick="navGo('screenMain')">
-    Nokchi/og
-  </button>
-  <button class="nav-item" id="navArchive" onclick="navGo('screenArchive')">
-    Archive
-  </button>
-  <button class="nav-item" id="navSearch" onclick="toggleSearch()">
-    <div class="nav-search-inner">
-      <span class="nav-search-label">Search</span>
-      <div class="nav-search-line"></div>
-      <span class="nav-search-icon">⌕</span>
+<div class="nav-wrap">
+  <nav class="bottom-nav" style="position:relative;">
+    <button class="nav-item active" id="navLogo" onclick="navGo('screenMain')">Nokchi/og</button>
+    <button class="nav-item" id="navArchive" onclick="navGo('screenArchive')">Archive</button>
+    <!-- 인풋 오버레이 — 두 단어 자리에 치환 -->
+    <div class="nav-search-overlay">
+      <input type="text" id="sInp" class="nav-search-input"
+        placeholder="식물을 찾아주세요 :)"
+        oninput="filterPlants(this.value)"
+        autocomplete="off">
     </div>
-  </button>
-</nav>
-
-<!-- ═══ SEARCH OVERLAY ═══ -->
-<div class="search-overlay" id="searchOverlay">
-  <input type="text" id="sInp" class="s-overlay-input"
-    placeholder="식물 이름으로 검색..."
-    oninput="filterPlants(this.value)"
-    autocomplete="off">
-  <button class="s-overlay-clear" id="sClear" onclick="clearSearch()">✕</button>
+    <!-- 돋보기 / 원형 화살표 — 동일 stroke SVG -->
+    <button class="nav-search-btn" id="navSearch" onclick="toggleSearch()">
+      <!-- 돋보기 -->
+      <svg class="icon-search" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="7.5" cy="7.5" r="4.5" stroke="currentColor" stroke-width="2"/>
+        <line x1="11" y1="11" x2="16" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <!-- 원형 화살표 — 10시 위치 화살촉, CW 270° -->
+      <svg class="icon-back" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5.8 5.8A4.5 4.5 0 1 1 5.8 12.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <polyline points="8.6,5.1 5.8,5.8 6.5,3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </nav>
 </div>
 
 <!-- ══════════════ MAIN ══════════════ -->
@@ -962,30 +1104,73 @@ input[type=range]::-webkit-slider-thumb {
 // DATA
 // ══════════════════════════════
 let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
-  { id:1, nameKo:'몬스테라', nameEn:'Monstera deliciosa',
-    images:['https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=600'],
-    water:'주 1회', sun:'반음지', temp:'18–28°C', air:'보통 (주 2–3회 환기)',
-    copy:'빛을 기억하는 잎, 그늘에서도 단단하게.' },
-  { id:2, nameKo:'산세베리아', nameEn:'Sansevieria trifasciata',
-    images:['https://images.unsplash.com/photo-1599598425947-5202edd56fdf?w=600'],
-    water:'월 1–2회', sun:'음지~양지', temp:'15–30°C', air:'강함에 잘 견딤',
-    copy:'잊혀도 살아남는 것들에 대하여.' },
-  { id:3, nameKo:'스킨답서스', nameEn:'Epipremnum aureum',
-    images:['https://images.unsplash.com/photo-1585584114963-503344a119b0?w=600'],
-    water:'주 1–2회', sun:'반음지', temp:'15–25°C', air:'보통',
-    copy:'어디서든 뿌리를 내리는 힘.' },
-  { id:4, nameKo:'선인장', nameEn:'Cactus spp.',
-    images:['https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600'],
-    water:'월 1회', sun:'직사광선', temp:'20–35°C', air:'통풍 필수',
-    copy:'침묵으로 꽉 찬 식물.' },
-  { id:5, nameKo:'고무나무', nameEn:'Ficus elastica',
-    images:['https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=600'],
-    water:'주 1회', sun:'밝은 간접광', temp:'16–26°C', air:'보통',
-    copy:'묵직하게, 그러나 부드럽게.' },
-  { id:6, nameKo:'틸란드시아', nameEn:'Tillandsia spp.',
-    images:['https://images.unsplash.com/photo-1509423350716-97f9360b4e09?w=600'],
-    water:'주 2–3회 분무', sun:'밝은 간접광', temp:'10–32°C', air:'통풍 필수',
-    copy:'흙 없이도 살아가는 방법.' },
+  {
+    "id": 1,
+    "nameKo": "드라세나 마지나타",
+    "nameEn": "Dracaena marginata",
+    "images": [
+      "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716257/nokchilog/sv2dqqpuj31vjgiue4ig.jpg",
+      "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716260/nokchilog/jfxoe48bswghw7l9nj2t.jpg"
+    ],
+    "water": "2–3주에 1회",
+    "sun": "밝은 간접광~반음지",
+    "temp": "18–28°C",
+    "air": "보통",
+    "copy": "구불한 목대에서 설픻 피어나는 초록 분수."
+  },
+  {
+    "id": 2,
+    "nameKo": "라피도포라 디컨시바",
+    "nameEn": "Rhaphidophora decursiva",
+    "images": [
+      "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716262/nokchilog/ps0dgqupxpwgafj2ndxx.jpg",
+      "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716264/nokchilog/t31zf2yxdpulaiwxua6k.jpg"
+    ],
+    "water": "주 1–2회",
+    "sun": "밝은 간접광",
+    "temp": "18–28°C",
+    "air": "보통",
+    "copy": "잎이 갈라질수록 깊어지는 것들."
+  },
+  {
+    "id": 3,
+    "nameKo": "아스파라거스",
+    "nameEn": "Asparagus setaceus",
+    "images": [
+      "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716200/nokchilog/qnkat1ngyitckvfqqsz8.jpg"
+    ],
+    "water": "주 1–2회",
+    "sun": "밝은 간접광",
+    "temp": "15–25°C",
+    "air": "보통",
+    "copy": "가느다란 것들의 고집."
+  },
+  {
+    "id": 4,
+    "nameKo": "필로덴드론 플로리다 뷰티그린",
+    "nameEn": "Philodendron 'Florida Beauty Green'",
+    "images": [
+      "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716202/nokchilog/ui6c5oc8x9u7i63vhlup.jpg"
+    ],
+    "water": "주 1회",
+    "sun": "밝은 간접광",
+    "temp": "18–28°C",
+    "air": "보통",
+    "copy": "무늬는 우연이 아니다."
+  },
+  {
+    "id": 5,
+    "nameKo": "동백나무",
+    "nameEn": "Camellia japonica",
+    "images": [
+      "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781714887/nokchilog/rpkgopua5wa2z1fce4mm.jpg"
+    ],
+    "water": "주 1–2회 (봄~가을), 겨울 월 1회",
+    "sun": "밝은 간접광",
+    "temp": "5–25°C",
+    "air": "보통",
+    "copy": "가장 추운 계절에 피는 것들."
+  }
 ];
 
 let selectedPlant = null;
@@ -1026,20 +1211,17 @@ function navGo(screen) {
 
 function toggleSearch() {
   searchOpen = !searchOpen;
-  document.getElementById('searchOverlay').classList.toggle('open', searchOpen);
+  document.querySelector('.nav-wrap').classList.toggle('search-open', searchOpen);
   document.getElementById('navSearch').classList.toggle('active', searchOpen);
   if (searchOpen) {
-    setTimeout(() => document.getElementById('sInp').focus(), 200);
-  } else {
-    clearSearch();
+    setTimeout(() => document.getElementById('sInp').focus(), 250);
   }
 }
 
 function closeSearch() {
   searchOpen = false;
-  document.getElementById('searchOverlay').classList.remove('open');
+  document.querySelector('.nav-wrap').classList.remove('search-open');
   document.getElementById('navSearch').classList.remove('active');
-  clearSearch();
 }
 
 function goAdmin() {
@@ -1056,43 +1238,108 @@ function goAdmin() {
 // ══════════════════════════════
 // ASCII ENGINE
 // ══════════════════════════════
-const ASCII = ' .,:;+*?%S#@';
+const NOKCHI_CHARS = 'N/og';
 
 function renderASCII(imgEl, canvas) {
   const W = canvas.offsetWidth; const H = canvas.offsetHeight;
-  canvas.width = W; canvas.height = H;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
-  const FS = 7; const CW = FS * 0.56; const CH = FS;
+  ctx.scale(dpr, dpr);
+  const FS = 5; const CW = FS * 0.72; const CH = 6.7;
   const cols = Math.floor(W / CW); const rows = Math.floor(H / CH);
   const off = document.createElement('canvas');
   off.width = cols; off.height = rows;
   const octx = off.getContext('2d');
   octx.drawImage(imgEl, 0, 0, cols, rows);
   const px = octx.getImageData(0,0,cols,rows).data;
+  // ── 1단계: 밝기 배열 + min/max 정규화
+  const bright = new Float32Array(cols * rows);
+  let minB = 1, maxB = 0;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const i = (r * cols + c) * 4;
+    const b = (px[i]*.299 + px[i+1]*.587 + px[i+2]*.114) / 255;
+    bright[r * cols + c] = b;
+    if (b < minB) minB = b;
+    if (b > maxB) maxB = b;
+  }
+  const range = maxB - minB || 1;
+
+  // ── 1.5단계: 블러된 밝기 배열 (외곽선만 잡기 위해)
+  const blurred = new Float32Array(cols * rows);
+  const BR = 5;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    let sum = 0, cnt = 0;
+    for (let dr = -BR; dr <= BR; dr++) for (let dc = -BR; dc <= BR; dc++) {
+      const nr = r+dr, nc = c+dc;
+      if (nr>=0 && nr<rows && nc>=0 && nc<cols) { sum += bright[nr*cols+nc]; cnt++; }
+    }
+    blurred[r*cols+c] = sum / cnt;
+  }
+
   ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
   ctx.fillStyle = '#fff';
-  ctx.font = `${FS}px 'Courier New', monospace`;
+  ctx.font = `400 ${FS}px 'nokchilog_3', monospace`;
   ctx.textBaseline = 'top';
-  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
-    const i=(r*cols+c)*4;
-    const b=(px[i]*.299+px[i+1]*.587+px[i+2]*.114)/255;
-    ctx.fillText(ASCII[Math.floor(b*(ASCII.length-1))], c*CW, r*CH);
+
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const norm = (bright[r * cols + c] - minB) / range;
+    const isSubject = norm < 0.85;
+    if (!isSubject) continue;
+
+    // ── 2단계: 블러된 배열에 소벨 적용 (외곽선만)
+    let edge = 0;
+    if (r > 0 && r < rows-1 && c > 0 && c < cols-1) {
+      const tl=blurred[(r-1)*cols+(c-1)], tc=blurred[(r-1)*cols+c], tr=blurred[(r-1)*cols+(c+1)];
+      const ml=blurred[r*cols+(c-1)],               mr=blurred[r*cols+(c+1)];
+      const bl=blurred[(r+1)*cols+(c-1)], bc=blurred[(r+1)*cols+c], br2=blurred[(r+1)*cols+(c+1)];
+      const gx = -tl - 2*ml - bl + tr + 2*mr + br2;
+      const gy = -tl - 2*tc - tr + bl + 2*bc + br2;
+      edge = Math.min(Math.sqrt(gx*gx + gy*gy) * 8.0, 1);
+    }
+
+    // 경계: 높은 확률 / 내부: 매우 희소
+    const interior = Math.pow(1 - norm, 6.0) * 0.006;
+    const prob = Math.max(edge * 0.65, interior);
+
+    if (Math.random() < prob) {
+      ctx.fillText(NOKCHI_CHARS[Math.floor(Math.random() * NOKCHI_CHARS.length)], c*CW, r*CH);
+    }
   }
 }
 
 function attachAscii(triggerEl, imgEl, asciiWrap) {
   const cv = asciiWrap.querySelector('canvas');
   let done = false;
-  const go = () => {
-    triggerEl.addEventListener('mouseenter', () => {
-      if (!done && imgEl.complete && imgEl.naturalWidth > 0) {
-        cv.style.width = '100%'; cv.style.height = '100%';
+  const isMobile = () => window.matchMedia('(hover: none)').matches;
+
+  const doRender = () => {
+    if (!done && imgEl.complete && imgEl.naturalWidth > 0) {
+      cv.style.width = '100%'; cv.style.height = '100%';
+      document.fonts.load("400 5px 'nokchilog_3'").then(() => {
         renderASCII(imgEl, cv);
         done = true;
-      }
-    });
+      });
+    }
+  };
+
+  const go = () => {
+    // 데스크탑: hover
+    triggerEl.addEventListener('mouseenter', doRender);
+
+    // 모바일: tap 토글
+    triggerEl.addEventListener('touchend', (e) => {
+      if (!isMobile()) return;
+      e.preventDefault();
+      doRender();
+      const isShowing = triggerEl.classList.contains('ascii-active');
+      triggerEl.classList.toggle('ascii-active', !isShowing);
+    }, { passive: false });
+
     window.addEventListener('resize', () => { done = false; });
   };
+
   if (imgEl.complete && imgEl.naturalWidth > 0) go();
   else imgEl.addEventListener('load', go);
 }
@@ -1120,8 +1367,10 @@ function renderList(list) {
           }
         </div>
         <div class="item-caption">
-          <span class="item-caption-line">${p.nameKo} — ${p.nameEn}</span>
-          <span class="item-caption-copy">${p.copy}</span>
+          <span class="item-caption-row"><span class="lbl">LOCAL NAME / </span>${p.local || p.nameKo}</span>
+          <span class="item-caption-row"><span class="lbl">SCIENTIFIC NAME / </span>${p.scientific || p.nameEn}</span>
+          <span class="item-caption-row"><span class="lbl">COMMON NAME / </span>${p.common || '—'}</span>
+          <span class="item-caption-row"><span class="lbl">FAMILY / </span>${p.family || '—'}</span>
         </div>
       </div>
     `;
@@ -1137,7 +1386,6 @@ function renderList(list) {
 }
 
 function filterPlants(q) {
-  document.getElementById('sClear').classList.toggle('on', q.length > 0);
   renderList(q ? plants.filter(p =>
     p.nameKo.includes(q) || p.nameEn.toLowerCase().includes(q.toLowerCase())
   ) : plants);
@@ -1149,7 +1397,6 @@ function filterPlants(q) {
 
 function clearSearch() {
   document.getElementById('sInp').value = '';
-  document.getElementById('sClear').classList.remove('on');
   renderList(plants);
 }
 
@@ -1173,12 +1420,19 @@ function renderArchive() {
   document.getElementById('aInfo').textContent = `${plants.length} specimens\nNokchilog, Seoul`;
   const grid = document.getElementById('aGrid');
   grid.innerHTML = plants.map(p => {
-    const img = p.images && p.images[0];
+    const imgs = p.images && p.images.length ? p.images : [];
+    const hasImgs = imgs.length > 0;
+    const dots = imgs.length > 1
+      ? `<div class="a-dots">${imgs.map((_, i) => `<div class="a-dot${i===0?' on':''}"></div>`).join('')}</div>`
+      : '';
     return `
       <div class="a-card" onclick="selectPlant(${p.id},'screenArchive')">
-        ${img
-          ? `<img class="a-img" src="${img}" alt="${p.nameKo}" crossorigin="anonymous" loading="lazy">
-             <div class="a-ascii"><canvas></canvas></div>`
+        ${hasImgs
+          ? `<div class="a-imgs">${imgs.map((src, i) =>
+              `<img class="a-img" src="${src}" alt="${p.nameKo}" crossorigin="anonymous" loading="lazy" data-idx="${i}">`
+            ).join('')}</div>
+             <div class="a-ascii"><canvas></canvas></div>
+             ${dots}`
           : `<div class="a-placeholder">${p.nameKo.charAt(0)}</div>`
         }
         <div class="a-label">
@@ -1188,11 +1442,22 @@ function renderArchive() {
       </div>
     `;
   }).join('');
+
   grid.querySelectorAll('.a-card').forEach(card => {
     const imgEl = card.querySelector('.a-img');
     const asc = card.querySelector('.a-ascii');
     if (!imgEl || !asc) return;
     attachAscii(card, imgEl, asc);
+
+    // 스크롤 시 dot 업데이트
+    const imgsWrap = card.querySelector('.a-imgs');
+    const dotEls = card.querySelectorAll('.a-dot');
+    if (imgsWrap && dotEls.length > 1) {
+      imgsWrap.addEventListener('scroll', () => {
+        const idx = Math.round(imgsWrap.scrollLeft / imgsWrap.offsetWidth);
+        dotEls.forEach((d, i) => d.classList.toggle('on', i === idx));
+      }, { passive: true });
+    }
   });
 }
 
