@@ -3,1324 +3,1365 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>녹취록 — 식물 라벨 시스템</title>
+<title>녹취록</title>
 <style>
-  :root {
-    --bg: #F5F2ED;
-    --white: #FDFCFA;
-    --ink: #1A1A18;
-    --ink-light: #6B6B68;
-    --ink-faint: #C4C2BC;
-    --green: #3D5A3E;
-    --green-light: #E8EDE8;
-    --green-mid: #A8BEA8;
-    --accent: #8B6F47;
-    --border: #DDD9D2;
-    --radius: 2px;
-    --font-sans: 'Helvetica Neue', 'Apple SD Gothic Neo', sans-serif;
-    --font-serif: Georgia, 'Times New Roman', serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: var(--font-sans);
-    background: var(--bg);
-    color: var(--ink);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* ── SCREENS ── */
-  .screen { display: none; min-height: 100vh; }
-  .screen.active { display: flex; flex-direction: column; }
-
-  /* ── NAV ── */
-  .nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: var(--white);
-    border-bottom: 1px solid var(--border);
-    padding: 0 20px;
-    height: 52px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-
-  .nav-logo {
-    font-size: 13px; letter-spacing: 0.12em; font-weight: 500;
-    color: var(--green);
-    text-transform: uppercase;
-  }
-
-  .nav-btn {
-    font-size: 11px; letter-spacing: 0.08em;
-    color: var(--ink-light); background: none; border: none;
-    cursor: pointer; text-transform: uppercase; padding: 6px 0;
-  }
-
-  .nav-btn:hover { color: var(--ink); }
-
-  .screen-content { padding-top: 52px; flex: 1; }
-
-  /* ── CUSTOMER SCREEN ── */
-  .customer-hero {
-    background: var(--green);
-    color: var(--white);
-    padding: 32px 24px 28px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .customer-hero::before {
-    content: '';
-    position: absolute; top: -40px; right: -40px;
-    width: 160px; height: 160px;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.12);
-  }
-
-  .customer-hero::after {
-    content: '';
-    position: absolute; bottom: -20px; right: 20px;
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.08);
-  }
-
-  .hero-label {
-    font-size: 10px; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--green-mid);
-    margin-bottom: 8px;
-  }
-
-  .hero-title {
-    font-size: 26px; font-weight: 300;
-    line-height: 1.2; letter-spacing: -0.01em;
-    margin-bottom: 6px;
-  }
-
-  .hero-sub {
-    font-size: 12px; color: rgba(255,255,255,0.55);
-    letter-spacing: 0.04em;
-  }
-
-  /* ── SEARCH ── */
-  .search-area {
-    padding: 20px 20px 0;
-  }
-
-  .search-wrap {
-    position: relative;
-  }
-
-  .search-input {
-    width: 100%;
-    padding: 12px 16px 12px 40px;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-family: var(--font-sans);
-    color: var(--ink);
-    outline: none;
-    transition: border-color 0.2s;
-    -webkit-appearance: none;
-  }
-
-  .search-input:focus { border-color: var(--green); }
-  .search-input::placeholder { color: var(--ink-faint); }
-
-  .search-icon {
-    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-    width: 16px; height: 16px; color: var(--ink-faint);
-  }
-
-  /* ── PLANT LIST ── */
-  .plant-list {
-    padding: 12px 20px 100px;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-
-  .plant-card {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-
-  .plant-card:hover, .plant-card:active {
-    border-color: var(--green);
-    background: var(--green-light);
-  }
-
-  .plant-card-info {}
-  .plant-card-name-ko {
-    font-size: 15px; font-weight: 500; color: var(--ink);
-    margin-bottom: 2px;
-  }
-  .plant-card-name-en {
-    font-size: 11px; letter-spacing: 0.06em;
-    color: var(--ink-light); text-transform: uppercase;
-  }
-
-  .plant-card-arrow {
-    color: var(--ink-faint); font-size: 18px; font-weight: 300;
-  }
-
-  .empty-state {
-    text-align: center; padding: 48px 20px;
-    color: var(--ink-light); font-size: 13px;
-    line-height: 1.6;
-  }
-
-  /* ── DRAWING SCREEN ── */
-  .drawing-header {
-    background: var(--white);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px;
-  }
-
-  .plant-selected-label {
-    font-size: 10px; letter-spacing: 0.16em;
-    text-transform: uppercase; color: var(--green);
-    margin-bottom: 4px;
-  }
-
-  .plant-selected-name {
-    font-size: 18px; font-weight: 400; color: var(--ink);
-  }
-
-  .plant-selected-en {
-    font-size: 11px; color: var(--ink-light);
-    letter-spacing: 0.06em; text-transform: uppercase;
-    margin-top: 2px;
-  }
-
-  .drawing-prompt {
-    padding: 14px 20px;
-    background: var(--green-light);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .drawing-prompt p {
-    font-size: 12px; color: var(--green);
-    line-height: 1.5; letter-spacing: 0.02em;
-  }
-
-  .canvas-wrap {
-    padding: 16px 20px;
-    flex: 1;
-    display: flex; flex-direction: column; gap: 12px;
-  }
-
-  #drawCanvas {
-    width: 100%;
-    aspect-ratio: 2.5/1;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    cursor: crosshair;
-    touch-action: none;
-    display: block;
-  }
-
-  .canvas-tools {
-    display: flex; gap: 8px; align-items: center;
-  }
-
-  .tool-btn {
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-    background: var(--white);
-    border-radius: var(--radius);
-    font-size: 12px; font-family: var(--font-sans);
-    color: var(--ink); cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.04em;
-  }
-
-  .tool-btn:hover { border-color: var(--ink); }
-  .tool-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
-
-  .color-picker-wrap {
-    display: flex; gap: 6px; align-items: center; margin-left: auto;
-  }
-
-  .color-dot {
-    width: 22px; height: 22px; border-radius: 50%;
-    cursor: pointer; border: 2px solid transparent;
-    transition: border-color 0.15s;
-  }
-
-  .color-dot.active { border-color: var(--ink); }
-  .color-dot:nth-child(1) { background: #1A1A18; }
-  .color-dot:nth-child(2) { background: #3D5A3E; }
-  .color-dot:nth-child(3) { background: #8B6F47; }
-  .color-dot:nth-child(4) { background: #C4C2BC; }
-
-  .size-slider {
-    width: 60px; height: 3px;
-    -webkit-appearance: none;
-    background: var(--border);
-    outline: none; border-radius: 2px;
-  }
-
-  .size-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    background: var(--ink); border-radius: 50%;
-    cursor: pointer;
-  }
-
-  .print-btn {
-    margin: 0 20px 20px;
-    width: calc(100% - 40px);
-    padding: 16px;
-    background: var(--green);
-    color: var(--white);
-    border: none; border-radius: var(--radius);
-    font-size: 13px; letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-family: var(--font-sans);
-    cursor: pointer;
-    transition: opacity 0.15s;
-  }
-
-  .print-btn:hover { opacity: 0.88; }
-  .print-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  /* ── LABEL PREVIEW SCREEN ── */
-  .label-preview-wrap {
-    padding: 24px 20px;
-    flex: 1;
-    display: flex; flex-direction: column; gap: 20px;
-  }
-
-  .preview-title {
-    font-size: 11px; letter-spacing: 0.16em;
-    text-transform: uppercase; color: var(--ink-light);
-  }
-
-  /* The label itself — 62mm wide simulated */
-  #labelPreview {
-    width: 100%;
-    background: var(--white);
-    border: 1px solid var(--border);
-    font-family: var(--font-sans);
-    padding: 0;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .label-inner {
-    padding: 14px 16px;
-  }
-
-  .label-shop-name {
-    font-size: 8px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--ink-light);
-    margin-bottom: 10px;
-  }
-
-  .label-main-row {
-    display: flex; align-items: flex-start;
-    gap: 12px; margin-bottom: 10px;
-  }
-
-  .label-symbol {
-    font-size: 32px; font-weight: 700;
-    color: var(--ink); line-height: 1;
-    font-family: var(--font-serif);
-    flex-shrink: 0;
-    letter-spacing: -0.04em;
-  }
-
-  .label-name-block { flex: 1; }
-
-  .label-name-ko {
-    font-size: 16px; font-weight: 600;
-    color: var(--ink); margin-bottom: 2px;
-    letter-spacing: -0.01em;
-  }
-
-  .label-name-en {
-    font-size: 8px; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--ink-light);
-  }
-
-  .label-drawing-area {
-    width: 100%;
-    border-top: 0.5px solid var(--border);
-    border-bottom: 0.5px solid var(--border);
-    margin: 10px 0;
-    background: var(--white);
-  }
-
-  .label-drawing-area img {
-    width: 100%; display: block;
-    height: 60px; object-fit: contain;
-  }
-
-  .label-info-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 6px 12px; margin-bottom: 10px;
-  }
-
-  .label-info-item {}
-
-  .label-info-key {
-    font-size: 7px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--ink-faint);
-    margin-bottom: 1px;
-  }
-
-  .label-info-val {
-    font-size: 10px; color: var(--ink); font-weight: 500;
-  }
-
-  .label-copy {
-    font-size: 9px; color: var(--ink-light);
-    letter-spacing: 0.04em; line-height: 1.5;
-    border-top: 0.5px solid var(--border);
-    padding-top: 8px; font-style: italic;
-  }
-
-  .label-footer {
-    display: flex; justify-content: space-between;
-    align-items: center; margin-top: 8px;
-  }
-
-  .label-date {
-    font-size: 7px; color: var(--ink-faint);
-    letter-spacing: 0.08em;
-  }
-
-  .label-barcode-mock {
-    display: flex; gap: 1px; align-items: flex-end; height: 16px;
-  }
-
-  .label-barcode-mock span {
-    display: block; width: 1.5px; background: var(--ink);
-  }
-
-  .action-row {
-    display: flex; gap: 10px;
-  }
-
-  .action-btn {
-    flex: 1; padding: 14px;
-    border: 1px solid var(--border);
-    background: var(--white);
-    border-radius: var(--radius);
-    font-size: 12px; font-family: var(--font-sans);
-    color: var(--ink); cursor: pointer;
-    text-align: center; letter-spacing: 0.08em;
-    text-transform: uppercase;
-    transition: all 0.15s;
-  }
-
-  .action-btn:hover { border-color: var(--ink); }
-  .action-btn.primary {
-    background: var(--green); color: var(--white); border-color: var(--green);
-  }
-  .action-btn.primary:hover { opacity: 0.88; }
-
-  /* ── SUCCESS SCREEN ── */
-  .success-wrap {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 40px 30px; text-align: center; gap: 16px;
-  }
-
-  .success-icon {
-    width: 56px; height: 56px;
-    border: 1px solid var(--green);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--green); font-size: 22px;
-  }
-
-  .success-title {
-    font-size: 20px; font-weight: 300; color: var(--ink);
-    letter-spacing: -0.01em;
-  }
-
-  .success-sub {
-    font-size: 13px; color: var(--ink-light); line-height: 1.6;
-    max-width: 260px;
-  }
-
-  .success-restart {
-    margin-top: 12px;
-    padding: 13px 32px;
-    background: var(--green); color: var(--white);
-    border: none; border-radius: var(--radius);
-    font-size: 12px; letter-spacing: 0.12em;
-    text-transform: uppercase; font-family: var(--font-sans);
-    cursor: pointer;
-  }
-
-  /* ── ADMIN SCREEN ── */
-  .admin-tabs {
-    display: flex; border-bottom: 1px solid var(--border);
-    background: var(--white);
-  }
-
-  .admin-tab {
-    flex: 1; padding: 14px;
-    text-align: center; font-size: 12px;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--ink-light); cursor: pointer;
-    border: none; background: none;
-    font-family: var(--font-sans);
-    border-bottom: 2px solid transparent;
-    transition: all 0.15s;
-  }
-
-  .admin-tab.active {
-    color: var(--green); border-bottom-color: var(--green);
-  }
-
-  .admin-panel { display: none; padding: 20px; }
-  .admin-panel.active { display: block; }
-
-  .admin-section-title {
-    font-size: 10px; letter-spacing: 0.16em;
-    text-transform: uppercase; color: var(--ink-light);
-    margin-bottom: 16px;
-  }
-
-  .plant-admin-list {
-    display: flex; flex-direction: column; gap: 8px;
-    margin-bottom: 20px;
-  }
-
-  .plant-admin-item {
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-
-  .plant-admin-item-name { font-size: 14px; font-weight: 500; }
-  .plant-admin-item-en { font-size: 11px; color: var(--ink-light); margin-top: 2px; }
-
-  .plant-admin-actions { display: flex; gap: 8px; }
-
-  .admin-edit-btn, .admin-del-btn {
-    padding: 6px 12px; border-radius: var(--radius);
-    font-size: 11px; font-family: var(--font-sans);
-    cursor: pointer; letter-spacing: 0.04em;
-    border: 1px solid var(--border); background: var(--white);
-    transition: all 0.15s;
-  }
-
-  .admin-edit-btn:hover { border-color: var(--green); color: var(--green); }
-  .admin-del-btn:hover { border-color: #c0392b; color: #c0392b; }
-
-  .add-plant-btn {
-    width: 100%; padding: 14px;
-    border: 1.5px dashed var(--green-mid);
-    background: var(--green-light);
-    border-radius: var(--radius);
-    font-size: 12px; color: var(--green);
-    letter-spacing: 0.1em; text-transform: uppercase;
-    font-family: var(--font-sans); cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .add-plant-btn:hover { border-color: var(--green); }
-
-  /* ── MODAL ── */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.45); z-index: 200;
-    align-items: flex-end; justify-content: center;
-  }
-
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: var(--white);
-    border-radius: 4px 4px 0 0;
-    width: 100%; max-width: 600px;
-    max-height: 90vh; overflow-y: auto;
-    padding: 24px 20px 40px;
-  }
-
-  .modal-title {
-    font-size: 16px; font-weight: 500; margin-bottom: 20px;
-    color: var(--ink);
-  }
-
-  .form-group { margin-bottom: 14px; }
-
-  .form-label {
-    display: block; font-size: 10px;
-    letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--ink-light); margin-bottom: 6px;
-  }
-
-  .form-input, .form-textarea {
-    width: 100%; padding: 10px 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 14px; font-family: var(--font-sans);
-    color: var(--ink); background: var(--white);
-    outline: none; transition: border-color 0.2s;
-    -webkit-appearance: none;
-  }
-
-  .form-input:focus, .form-textarea:focus { border-color: var(--green); }
-
-  .form-textarea { resize: vertical; min-height: 70px; }
-
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-
-  .modal-save-btn {
-    flex: 1; padding: 13px;
-    background: var(--green); color: var(--white);
-    border: none; border-radius: var(--radius);
-    font-size: 13px; font-family: var(--font-sans);
-    letter-spacing: 0.08em; cursor: pointer;
-  }
-
-  .modal-cancel-btn {
-    padding: 13px 20px;
-    background: none; border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 13px; font-family: var(--font-sans);
-    color: var(--ink); cursor: pointer;
-  }
-
-  /* ── PRINTER STATUS ── */
-  .printer-status-bar {
-    margin: 0 20px 16px;
-    padding: 10px 14px;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    display: flex; align-items: center; gap: 10px;
-  }
-
-  .status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--ink-faint); flex-shrink: 0;
-  }
-
-  .status-dot.connected { background: #4CAF50; }
-  .status-dot.error { background: #E53935; }
-
-  .status-text { font-size: 12px; color: var(--ink-light); }
-
-  .printer-ip-input {
-    margin-left: auto;
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 12px; font-family: var(--font-sans);
-    width: 130px; outline: none;
-    -webkit-appearance: none;
-  }
-
-  .connect-btn {
-    padding: 6px 12px;
-    background: var(--green); color: var(--white);
-    border: none; border-radius: var(--radius);
-    font-size: 11px; font-family: var(--font-sans);
-    cursor: pointer; letter-spacing: 0.06em;
-  }
-
-  /* ── QR SECTION ── */
-  .qr-section {
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px; text-align: center;
-  }
-
-  .qr-mock {
-    width: 120px; height: 120px;
-    margin: 0 auto 16px;
-    background: var(--ink);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--white); font-size: 9px;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    position: relative; overflow: hidden;
-  }
-
-  .qr-mock::before {
-    content: '';
-    position: absolute; inset: 12px;
-    border: 2px solid var(--white);
-  }
-
-  .qr-url {
-    font-size: 11px; color: var(--ink-light);
-    margin-bottom: 12px; word-break: break-all;
-  }
-
-  .qr-download-btn {
-    padding: 10px 24px;
-    border: 1px solid var(--green);
-    color: var(--green); background: none;
-    border-radius: var(--radius);
-    font-size: 12px; font-family: var(--font-sans);
-    cursor: pointer; letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .section-divider {
-    height: 1px; background: var(--border);
-    margin: 24px 0;
-  }
-
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+* { margin:0; padding:0; box-sizing:border-box; }
+
+@font-face {
+  font-family: 'MonoplexKR';
+  src: url('./MonoplexKR-Text.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('./Archivo-VariableFont_wdth_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg: #000000;
+  --white: #FFFFFF;
+  --caption: #888884;
+  --border: rgba(255,255,255,0.1);
+  --mono: 'MonoplexKR', 'Courier New', Courier, monospace;
+  --sans: 'MonoplexKR', 'Helvetica Neue', 'Apple SD Gothic Neo', Arial, sans-serif;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--mono);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ══════════════════════════════════
+   BOTTOM FIXED NAV
+══════════════════════════════════ */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 200;
+  height: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Archivo', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: color 0.15s;
+}
+
+.nav-item:hover { color: var(--white); }
+.nav-item.active { color: var(--white); }
+
+/* SEARCH 아이템 — SEARCH 텍스트 + 밑줄 + 돋보기 */
+.nav-search-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0 16px;
+}
+
+.nav-search-label {
+  font-family: 'Archivo', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.nav-search-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-search-line::after {
+  content: '';
+  position: absolute;
+  left: -100%; top: 0;
+  width: 100%; height: 100%;
+  background: var(--white);
+  transition: left 0.3s ease;
+}
+
+.nav-item.active .nav-search-line::after { left: 0; }
+
+.nav-search-icon {
+  font-size: 12px;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+/* 실제 검색 인풋 — 숨겨져 있다가 SEARCH 누르면 나타남 */
+.search-overlay {
+  position: fixed;
+  bottom: 48px; left: 0; right: 0;
+  z-index: 199;
+  padding: 0 24px 0;
+  background: rgba(0,0,0,0.96);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  height: 0;
+  overflow: hidden;
+  transition: height 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.search-overlay.open {
+  height: 52px;
+}
+
+.s-overlay-input {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--white);
+  letter-spacing: 0.06em;
+}
+
+.s-overlay-input::placeholder { color: rgba(255,255,255,0.18); }
+
+.s-overlay-clear {
+  font-size: 9px; color: rgba(255,255,255,0.25);
+  cursor: pointer; background: none; border: none;
+  font-family: var(--mono); flex-shrink: 0;
+  display: none;
+}
+.s-overlay-clear.on { display: block; }
+
+/* ══════════════════════════════════
+   MAIN
+══════════════════════════════════ */
+
+/* 스크롤 컨테이너 */
+.main-scroll {
+  padding: 80px 0 120px;
+}
+
+/* 각 식물 항목 */
+.plant-item {
+  margin-bottom: 120px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.plant-item:hover .item-img { opacity: 0; }
+.plant-item:hover .item-ascii { opacity: 1; }
+
+/* 이미지 컨테이너 — 중앙 정렬, 폭 제한 */
+.item-img-wrap {
+  position: relative;
+  width: 32vw;
+  max-width: 420px;
+  min-width: 200px;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .item-img-wrap { width: 70vw; }
+}
+
+.item-img {
+  width: 100%;
+  display: block;
+  transition: opacity 0.04s;
+}
+
+.item-ascii {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity 0.04s;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.item-ascii canvas {
+  width: 100%; height: 100%; display: block;
+}
+
+.item-placeholder {
+  width: 100%;
+  aspect-ratio: 3/4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+  font-size: 48px;
+  color: #333;
+  letter-spacing: -0.04em;
+}
+
+/* 캡션 — 이미지 아래, 가운데 정렬, 소문자, 모노 */
+.item-caption {
+  margin-top: 20px;
+  text-align: center;
+  line-height: 1.8;
+}
+
+.item-caption-line {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--caption);
+}
+
+.item-caption-copy {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.2);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* 플로팅 검색 */
+.floating-search {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  width: min(320px, calc(100% - 80px));
+}
+
+.search-inner {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  gap: 10px;
+}
+
+.s-tag {
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  flex-shrink: 0;
+}
+
+.s-input {
+  flex: 1;
+  background: none; border: none; outline: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--white);
+  letter-spacing: 0.06em;
+}
+
+.s-input::placeholder { color: rgba(255,255,255,0.15); }
+
+.s-clear {
+  font-size: 9px; color: rgba(255,255,255,0.25);
+  cursor: pointer; background: none; border: none;
+  font-family: var(--mono);
+  display: none;
+}
+
+.s-clear.on { display: block; }
+
+/* 빈 검색 결과 */
+.empty-msg {
+  text-align: center;
+  padding: 120px 0;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.15);
+}
+
+/* ══════════════════════════════════
+   ARCHIVE — 그리드
+══════════════════════════════════ */
+#screenArchive { min-height: 100vh; }
+
+.archive-top {
+  padding: 80px 40px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+}
+
+.archive-ttl {
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--white);
+  font-family: var(--mono);
+}
+
+.archive-info {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--caption);
+  text-align: right;
+  line-height: 1.8;
+}
+
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-left: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .archive-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.a-card {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3/4;
+  background: #0a0a0a;
+}
+
+.a-card:hover .a-img { opacity: 0; }
+.a-card:hover .a-ascii { opacity: 1; }
+
+.a-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  position: absolute; inset: 0;
+  transition: opacity 0.04s;
+}
+
+.a-ascii {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity 0.04s;
+  background: var(--bg);
+}
+
+.a-ascii canvas { width:100%;height:100%;display:block; }
+
+.a-placeholder {
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;color:#222;
+}
+
+.a-label {
+  position: absolute;
+  bottom:0;left:0;right:0;
+  padding: 20px 12px 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.88) 60%);
+  z-index: 2;
+}
+
+.a-ko { font-size:11px;color:var(--white);letter-spacing:0.04em;margin-bottom:1px; }
+.a-en { font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--caption); }
+
+/* ══════════════════════════════════
+   DETAIL
+══════════════════════════════════ */
+.d-topbar {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky; top:0;
+  background: var(--bg);
+  z-index: 50;
+}
+
+.back { font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--caption);background:none;border:none;font-family:var(--mono);cursor:pointer;transition:color 0.1s; }
+.back:hover { color:var(--white); }
+
+.d-name-sm { font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--caption); }
+
+/* masonry photos */
+.d-masonry {
+  columns: 2;
+  column-gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (min-width: 700px) { .d-masonry { columns: 3; } }
+
+.d-mitem {
+  break-inside: avoid;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.d-mitem:hover .d-mimg { opacity: 0; }
+.d-mitem:hover .d-mascii { opacity: 1; }
+
+.d-mimg { width:100%;display:block;transition:opacity 0.04s; }
+
+.d-mascii {
+  position:absolute;inset:0;
+  opacity:0;transition:opacity 0.04s;
+  background:var(--bg);
+}
+
+.d-mascii canvas { width:100%;height:100%;display:block; }
+
+/* info */
+.d-info { padding:28px 24px;border-bottom:1px solid var(--border); }
+
+.d-copy {
+  font-size:clamp(13px,2vw,20px);
+  line-height:1.5;
+  color:var(--white);
+  letter-spacing:-0.01em;
+  margin-bottom:28px;
+  font-style:italic;
+}
+
+.d-table {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  border-top:1px solid var(--border);
+}
+
+@media (min-width:600px) { .d-table { grid-template-columns:repeat(4,1fr); } }
+
+.d-cell {
+  padding:14px 14px 14px 0;
+  border-bottom:1px solid var(--border);
+  border-right:1px solid var(--border);
+}
+
+.d-cell:nth-child(even) { padding-left:14px; }
+@media (min-width:600px) { .d-cell:nth-child(even){padding-left:0;} .d-cell:last-child{border-right:none;} }
+
+.d-key { font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:#444;margin-bottom:5px; }
+.d-val { font-size:11px;color:var(--white);line-height:1.4; }
+
+.d-cta { padding:28px 24px; }
+.d-cta-sub { font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--caption);margin-bottom:12px; }
+
+.d-cta-btn {
+  display:inline-block;padding:12px 24px;
+  border:1px solid rgba(255,255,255,0.2);
+  background:none;color:var(--white);
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:0.12em;text-transform:uppercase;
+  cursor:pointer;transition:all 0.1s;
+}
+
+.d-cta-btn:hover { background:var(--white);color:var(--bg); }
+
+/* ══════════════════════════════════
+   DRAWING
+══════════════════════════════════ */
+.drw-top {
+  padding:18px 24px;
+  border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:flex-start;
+}
+
+.drw-prompt { font-size:9px;letter-spacing:0.06em;color:var(--caption);line-height:1.8;max-width:200px;text-align:right; }
+
+.drw-canvas-wrap { padding:24px; }
+
+#drawCanvas {
+  width:100%;aspect-ratio:3/1;
+  background:#111;display:block;
+  cursor:crosshair;touch-action:none;
+}
+
+.drw-controls { margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
+
+.dc {
+  font-family:var(--mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;
+  padding:7px 12px;border:1px solid rgba(255,255,255,0.15);
+  background:none;color:var(--caption);cursor:pointer;transition:all 0.1s;
+}
+
+.dc:hover,.dc.on { border-color:var(--white);color:var(--white); }
+
+.cdots { display:flex;gap:5px;margin-left:auto; }
+
+.cdot {
+  width:16px;height:16px;border-radius:50%;cursor:pointer;
+  border:1.5px solid transparent;transition:border-color 0.1s;
+}
+
+.cdot.on { border-color:var(--white); }
+
+input[type=range] {
+  -webkit-appearance:none;width:72px;height:1px;
+  background:rgba(255,255,255,0.15);outline:none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none;width:10px;height:10px;
+  background:var(--white);border-radius:50%;cursor:pointer;
+}
+
+.br-row { display:flex;align-items:center;gap:8px;margin-top:10px; }
+.br-lbl { font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:#333; }
+
+.go-preview {
+  margin:0 24px 24px;display:block;width:calc(100% - 48px);
+  padding:14px;border:1px solid rgba(255,255,255,0.15);
+  background:none;color:var(--white);font-family:var(--mono);
+  font-size:9px;letter-spacing:0.16em;text-transform:uppercase;
+  cursor:pointer;transition:all 0.1s;
+}
+
+.go-preview:hover { background:var(--white);color:var(--bg); }
+
+/* ══════════════════════════════════
+   LABEL PREVIEW
+══════════════════════════════════ */
+.lp-wrap { padding:24px; }
+
+.lp-eyebrow {
+  font-size:8px;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--caption);margin-bottom:18px;
+}
+
+#labelPreview {
+  background:#F0EDE6;color:#111;
+  padding:18px;margin-bottom:20px;
+}
+
+.lb-shop { font-family:var(--mono);font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:#999;margin-bottom:12px; }
+.lb-row { display:flex;gap:12px;align-items:flex-start;margin-bottom:10px; }
+.lb-sym { font-family:var(--mono);font-size:32px;font-weight:700;color:#111;line-height:1;letter-spacing:-0.04em;flex-shrink:0; }
+.lb-ko { font-family:var(--mono);font-size:14px;font-weight:600;color:#111;margin-bottom:2px; }
+.lb-en { font-family:var(--mono);font-size:7px;letter-spacing:0.1em;text-transform:uppercase;color:#999; }
+.lb-drw { width:100%;border-top:0.5px solid #ddd;border-bottom:0.5px solid #ddd;margin:8px 0; }
+.lb-drw img { width:100%;height:52px;object-fit:contain;display:block; }
+.lb-grid { display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;margin-bottom:8px; }
+.lb-key { font-family:var(--mono);font-size:7px;letter-spacing:0.14em;text-transform:uppercase;color:#aaa;margin-bottom:1px; }
+.lb-val { font-family:var(--mono);font-size:9px;color:#111;font-weight:500; }
+.lb-copy { font-family:var(--mono);font-size:8px;color:#999;border-top:0.5px solid #ddd;padding-top:7px;font-style:italic;line-height:1.5; }
+.lb-foot { display:flex;justify-content:space-between;align-items:center;margin-top:7px; }
+.lb-date { font-family:var(--mono);font-size:7px;color:#bbb;letter-spacing:0.08em; }
+.lb-bar { display:flex;gap:1px;align-items:flex-end;height:13px; }
+.lb-bar span { display:block;width:1.5px;background:#111; }
+
+.act-row { display:flex;gap:10px; }
+.act {
+  flex:1;padding:13px;font-family:var(--mono);font-size:9px;
+  letter-spacing:0.12em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,0.15);background:none;
+  color:var(--white);cursor:pointer;transition:all 0.1s;
+}
+.act:hover { border-color:var(--white); }
+.act.pr { background:var(--white);color:var(--bg);border-color:var(--white); }
+.act.pr:hover { opacity:0.8; }
+
+/* ══════════════════════════════════
+   SUCCESS
+══════════════════════════════════ */
+.suc-wrap {
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px;text-align:center;gap:16px;
+}
+
+.suc-mark { font-size:40px;color:var(--white); }
+.suc-ttl { font-size:16px;letter-spacing:-0.01em;color:var(--white); }
+.suc-sub { font-size:9px;color:var(--caption);line-height:1.9;letter-spacing:0.08em; }
+.suc-back {
+  margin-top:8px;padding:11px 24px;
+  border:1px solid rgba(255,255,255,0.15);background:none;
+  color:var(--white);font-family:var(--mono);font-size:9px;
+  letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;
+  transition:all 0.1s;
+}
+.suc-back:hover { background:var(--white);color:var(--bg); }
+
+/* ══════════════════════════════════
+   ADMIN
+══════════════════════════════════ */
+.adm-wrap { max-width:560px;margin:0 auto;padding:80px 24px 60px; }
+
+.adm-hd {
+  font-size:8px;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--caption);margin-bottom:20px;padding-bottom:14px;
+  border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;
+}
+
+.adm-row {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0;border-bottom:1px solid var(--border);
+}
+
+.adm-nm { font-size:12px;color:var(--white); }
+.adm-en { font-size:9px;color:var(--caption);margin-top:2px;letter-spacing:0.04em; }
+.adm-btns { display:flex;gap:6px; }
+
+.adm-btn {
+  font-family:var(--mono);font-size:8px;letter-spacing:0.08em;
+  padding:5px 10px;border:1px solid rgba(255,255,255,0.15);
+  background:none;color:var(--caption);cursor:pointer;transition:all 0.1s;
+}
+
+.adm-btn:hover { border-color:var(--white);color:var(--white); }
+.adm-btn.del:hover { border-color:#c00;color:#c00; }
+
+.adm-add {
+  width:100%;padding:12px;font-family:var(--mono);font-size:8px;
+  letter-spacing:0.16em;text-transform:uppercase;
+  border:1px dashed rgba(255,255,255,0.12);background:none;
+  color:var(--caption);cursor:pointer;margin-top:12px;transition:all 0.1s;
+}
+
+.adm-add:hover { border-color:rgba(255,255,255,0.4);color:var(--white); }
+
+/* MODAL */
+.m-ov {
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.8);z-index:300;
+  align-items:flex-end;justify-content:center;
+}
+.m-ov.open { display:flex; }
+
+.m-box {
+  background:#111;border-top:1px solid var(--border);
+  width:100%;max-width:560px;max-height:88svh;overflow-y:auto;
+  padding:24px 20px 44px;
+}
+
+.m-ttl { font-size:11px;color:var(--white);margin-bottom:20px;letter-spacing:0.04em; }
+
+.fg { margin-bottom:12px; }
+
+.fl {
+  display:block;font-size:7px;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--caption);margin-bottom:5px;
+}
+
+.fi {
+  width:100%;padding:9px 11px;
+  border:1px solid rgba(255,255,255,0.1);
+  background:#000;font-family:var(--mono);
+  font-size:12px;color:var(--white);outline:none;
+  transition:border-color 0.15s;-webkit-appearance:none;border-radius:0;
+}
+
+.fi:focus { border-color:rgba(255,255,255,0.4); }
+
+.fh { font-size:8px;color:#333;margin-top:3px;line-height:1.6;letter-spacing:0.03em; }
+
+.fr { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+
+.m-acts { display:flex;gap:8px;margin-top:18px; }
+
+.m-save {
+  flex:1;padding:12px;background:var(--white);color:var(--bg);
+  border:none;font-family:var(--mono);font-size:9px;
+  letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;
+}
+
+.m-cancel {
+  padding:12px 16px;background:none;
+  border:1px solid rgba(255,255,255,0.15);
+  font-family:var(--mono);font-size:9px;color:var(--caption);cursor:pointer;
+}
+
+::-webkit-scrollbar { width:2px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#222; }
 </style>
 </head>
 <body>
 
-<!-- ════════ CUSTOMER SCREEN ════════ -->
-<div id="screenCustomer" class="screen active">
-  <nav class="nav">
-    <span class="nav-logo">녹취록</span>
-    <button class="nav-btn" onclick="goAdmin()">관리자</button>
-  </nav>
-
-  <div class="screen-content">
-    <div class="customer-hero">
-      <div class="hero-label">Nokchilog Plant Archive</div>
-      <div class="hero-title">어떤 식물을<br>데려가시나요?</div>
-      <div class="hero-sub">식물을 검색하고 나만의 라벨을 만들어보세요</div>
+<!-- ═══ BOTTOM NAV ═══ -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="navLogo" onclick="navGo('screenMain')">
+    Nokchi/og
+  </button>
+  <button class="nav-item" id="navArchive" onclick="navGo('screenArchive')">
+    Archive
+  </button>
+  <button class="nav-item" id="navSearch" onclick="toggleSearch()">
+    <div class="nav-search-inner">
+      <span class="nav-search-label">Search</span>
+      <div class="nav-search-line"></div>
+      <span class="nav-search-icon">⌕</span>
     </div>
+  </button>
+</nav>
 
-    <div class="search-area">
-      <div class="search-wrap">
-        <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <input
-          type="text" id="searchInput"
-          class="search-input"
-          placeholder="식물 이름으로 검색..."
-          oninput="filterPlants(this.value)"
-        >
-      </div>
-    </div>
+<!-- ═══ SEARCH OVERLAY ═══ -->
+<div class="search-overlay" id="searchOverlay">
+  <input type="text" id="sInp" class="s-overlay-input"
+    placeholder="식물 이름으로 검색..."
+    oninput="filterPlants(this.value)"
+    autocomplete="off">
+  <button class="s-overlay-clear" id="sClear" onclick="clearSearch()">✕</button>
+</div>
 
-    <div class="plant-list" id="plantList"></div>
+<!-- ══════════════ MAIN ══════════════ -->
+<div id="screenMain" class="screen active">
+
+  <div class="main-scroll" id="mainScroll">
+    <!-- 식물 목록 렌더링 -->
   </div>
 </div>
 
-<!-- ════════ DRAWING SCREEN ════════ -->
+<!-- ══════════════ ARCHIVE ══════════════ -->
+<div id="screenArchive" class="screen">
+  <div class="archive-top">
+    <div class="archive-ttl">Archive</div>
+    <div class="archive-info" id="aInfo"></div>
+  </div>
+  <div class="archive-grid" id="aGrid"></div>
+</div>
+
+<!-- ══════════════ DETAIL ══════════════ -->
+<div id="screenDetail" class="screen">
+  <div class="d-topbar">
+    <button class="back" onclick="detailBack()">← back</button>
+    <div class="d-name-sm" id="dSm">—</div>
+  </div>
+
+  <div class="d-masonry" id="dMasonry"></div>
+
+  <div class="d-info">
+    <div class="d-copy" id="dCopy">—</div>
+    <div class="d-table">
+      <div class="d-cell"><div class="d-key">물 주기</div><div class="d-val" id="dWater">—</div></div>
+      <div class="d-cell"><div class="d-key">햇빛</div><div class="d-val" id="dSun">—</div></div>
+      <div class="d-cell"><div class="d-key">최적 온도</div><div class="d-val" id="dTemp">—</div></div>
+      <div class="d-cell"><div class="d-key">통풍</div><div class="d-val" id="dAir">—</div></div>
+    </div>
+  </div>
+
+  <div class="d-cta">
+    <div class="d-cta-sub">이 식물과 함께하기</div>
+    <button class="d-cta-btn" onclick="goDrawing()">나만의 라벨 만들기 →</button>
+  </div>
+</div>
+
+<!-- ══════════════ DRAWING ══════════════ -->
 <div id="screenDrawing" class="screen">
-  <nav class="nav">
-    <span class="nav-logo">녹취록</span>
-    <button class="nav-btn" onclick="showScreen('screenCustomer')">← 뒤로</button>
-  </nav>
-
-  <div class="screen-content" style="display:flex;flex-direction:column;">
-    <div class="drawing-header">
-      <div class="plant-selected-label">선택한 식물</div>
-      <div class="plant-selected-name" id="selectedPlantName">—</div>
-      <div class="plant-selected-en" id="selectedPlantEn">—</div>
+  <div class="drw-top">
+    <button class="back" onclick="showScreen('screenDetail')">← back</button>
+    <div class="drw-prompt">
+      이 식물과의 첫 순간을 그려보세요.<br>
+      라벨에 담겨 함께 집으로 갑니다.
     </div>
-
-    <div class="drawing-prompt">
-      <p>이 식물과의 첫 순간을 그려보세요.<br>라벨에 담겨 함께 집으로 갑니다.</p>
-    </div>
-
-    <div class="canvas-wrap">
-      <canvas id="drawCanvas"></canvas>
-
-      <div class="canvas-tools">
-        <button class="tool-btn active" id="btnDraw" onclick="setTool('draw')">그리기</button>
-        <button class="tool-btn" id="btnErase" onclick="setTool('erase')">지우기</button>
-        <button class="tool-btn" onclick="clearCanvas()">초기화</button>
-
-        <div class="color-picker-wrap">
-          <div class="color-dot active" onclick="setColor(0)"></div>
-          <div class="color-dot" onclick="setColor(1)"></div>
-          <div class="color-dot" onclick="setColor(2)"></div>
-          <div class="color-dot" onclick="setColor(3)"></div>
-        </div>
-      </div>
-
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:11px;color:var(--ink-light);letter-spacing:0.06em;">굵기</span>
-        <input type="range" class="size-slider" id="brushSize" min="1" max="20" value="3">
-      </div>
-    </div>
-
-    <button class="print-btn" onclick="goPreview()">라벨 미리보기 →</button>
   </div>
+
+  <div class="drw-canvas-wrap">
+    <canvas id="drawCanvas"></canvas>
+
+    <div class="drw-controls">
+      <button class="dc on" id="btnDrw" onclick="setTool('draw')">그리기</button>
+      <button class="dc" id="btnErs" onclick="setTool('erase')">지우기</button>
+      <button class="dc" onclick="clearCanvas()">초기화</button>
+      <div class="cdots">
+        <div class="cdot on" style="background:#FFFFFF" onclick="setColor(0)"></div>
+        <div class="cdot" style="background:#3D5A3E" onclick="setColor(1)"></div>
+        <div class="cdot" style="background:#8B6F47" onclick="setColor(2)"></div>
+        <div class="cdot" style="background:#555" onclick="setColor(3)"></div>
+      </div>
+    </div>
+
+    <div class="br-row">
+      <span class="br-lbl">굵기</span>
+      <input type="range" id="bSz" min="1" max="20" value="3">
+    </div>
+  </div>
+
+  <button class="go-preview" onclick="goPreview()">라벨 미리보기 →</button>
 </div>
 
-<!-- ════════ PREVIEW SCREEN ════════ -->
+<!-- ══════════════ LABEL PREVIEW ══════════════ -->
 <div id="screenPreview" class="screen">
-  <nav class="nav">
-    <span class="nav-logo">녹취록</span>
-    <button class="nav-btn" onclick="showScreen('screenDrawing')">← 수정</button>
-  </nav>
+  <div class="d-topbar">
+    <button class="back" onclick="showScreen('screenDrawing')">← back</button>
+    <div class="d-name-sm">label preview</div>
+  </div>
 
-  <div class="screen-content">
-    <div class="label-preview-wrap">
-      <div class="preview-title">라벨 미리보기</div>
+  <div class="lp-wrap">
+    <div class="lp-eyebrow">출력될 라벨</div>
 
-      <!-- THE LABEL -->
-      <div id="labelPreview">
-        <div class="label-inner">
-          <div class="label-shop-name">Nokchilog — 녹취록 / Mangwon-dong, Seoul</div>
-
-          <div class="label-main-row">
-            <div class="label-symbol">Ng</div>
-            <div class="label-name-block">
-              <div class="label-name-ko" id="labelNameKo">—</div>
-              <div class="label-name-en" id="labelNameEn">—</div>
-            </div>
-          </div>
-
-          <div class="label-drawing-area">
-            <img id="labelDrawingImg" src="" alt="drawing">
-          </div>
-
-          <div class="label-info-grid">
-            <div class="label-info-item">
-              <div class="label-info-key">물 주기</div>
-              <div class="label-info-val" id="labelWater">—</div>
-            </div>
-            <div class="label-info-item">
-              <div class="label-info-key">햇빛</div>
-              <div class="label-info-val" id="labelSun">—</div>
-            </div>
-            <div class="label-info-item">
-              <div class="label-info-key">최적 온도</div>
-              <div class="label-info-val" id="labelTemp">—</div>
-            </div>
-            <div class="label-info-item">
-              <div class="label-info-key">통풍</div>
-              <div class="label-info-val" id="labelAir">—</div>
-            </div>
-          </div>
-
-          <div class="label-copy" id="labelCopy">—</div>
-
-          <div class="label-footer">
-            <div class="label-date" id="labelDate">—</div>
-            <div class="label-barcode-mock" id="barcodeEl"></div>
-          </div>
+    <div id="labelPreview">
+      <div class="lb-shop">Nokchilog — 녹취록 / Mangwon-dong, Seoul</div>
+      <div class="lb-row">
+        <div class="lb-sym">Ng</div>
+        <div>
+          <div class="lb-ko" id="lKo">—</div>
+          <div class="lb-en" id="lEn">—</div>
         </div>
       </div>
-
-      <div class="action-row">
-        <button class="action-btn" onclick="showScreen('screenDrawing')">다시 그리기</button>
-        <button class="action-btn primary" onclick="printLabel()">인쇄하기</button>
+      <div class="lb-drw"><img id="lImg" src="" alt=""></div>
+      <div class="lb-grid">
+        <div><div class="lb-key">물 주기</div><div class="lb-val" id="lWater">—</div></div>
+        <div><div class="lb-key">햇빛</div><div class="lb-val" id="lSun">—</div></div>
+        <div><div class="lb-key">최적 온도</div><div class="lb-val" id="lTemp">—</div></div>
+        <div><div class="lb-key">통풍</div><div class="lb-val" id="lAir">—</div></div>
       </div>
+      <div class="lb-copy" id="lCopy">—</div>
+      <div class="lb-foot">
+        <div class="lb-date" id="lDate">—</div>
+        <div class="lb-bar" id="lBar"></div>
+      </div>
+    </div>
+
+    <div class="act-row">
+      <button class="act" onclick="showScreen('screenDrawing')">다시 그리기</button>
+      <button class="act pr" onclick="printLabel()">인쇄하기</button>
     </div>
   </div>
 </div>
 
-<!-- ════════ SUCCESS SCREEN ════════ -->
+<!-- ══════════════ SUCCESS ══════════════ -->
 <div id="screenSuccess" class="screen">
-  <nav class="nav">
-    <span class="nav-logo">녹취록</span>
-  </nav>
-
-  <div class="screen-content" style="display:flex;flex-direction:column;">
-    <div class="success-wrap">
-      <div class="success-icon">✓</div>
-      <div class="success-title">라벨이 출력됩니다</div>
-      <div class="success-sub">잠시 후 카운터에서 라벨을 받아<br>화분에 감아 가져가세요 🌿</div>
-      <button class="success-restart" onclick="restart()">처음으로</button>
-    </div>
+  <div class="suc-wrap">
+    <div class="suc-mark">✓</div>
+    <div class="suc-ttl">라벨이 출력됩니다</div>
+    <div class="suc-sub">카운터에서 라벨을 받아<br>화분에 감아 가져가세요</div>
+    <button class="suc-back" onclick="restart()">처음으로</button>
   </div>
 </div>
 
-<!-- ════════ ADMIN SCREEN ════════ -->
+<!-- ══════════════ ADMIN ══════════════ -->
 <div id="screenAdmin" class="screen">
-  <nav class="nav">
-    <span class="nav-logo">녹취록 — 관리자</span>
-    <button class="nav-btn" onclick="showScreen('screenCustomer')">← 나가기</button>
-  </nav>
-
-  <div class="screen-content">
-    <div class="admin-tabs">
-      <button class="admin-tab active" onclick="switchAdminTab('plants', this)">식물 관리</button>
-      <button class="admin-tab" onclick="switchAdminTab('printer', this)">프린터</button>
-      <button class="admin-tab" onclick="switchAdminTab('qr', this)">QR 코드</button>
+  <div class="adm-wrap">
+    <div class="adm-hd">
+      <span>식물 관리</span>
+      <button class="back" onclick="navGo('screenMain')">← 나가기</button>
     </div>
-
-    <!-- PLANTS TAB -->
-    <div class="admin-panel active" id="adminPlants">
-      <div class="admin-section-title">등록된 식물</div>
-      <div class="plant-admin-list" id="adminPlantList"></div>
-      <button class="add-plant-btn" onclick="openModal()">+ 새 식물 추가</button>
-    </div>
-
-    <!-- PRINTER TAB -->
-    <div class="admin-panel" id="adminPrinter">
-      <div class="admin-section-title">프린터 연결</div>
-
-      <div class="printer-status-bar">
-        <div class="status-dot" id="statusDot"></div>
-        <span class="status-text" id="statusText">연결 안됨</span>
-        <input type="text" class="printer-ip-input" id="printerIp" placeholder="192.168.1.xxx" value="">
-        <button class="connect-btn" onclick="testPrinterConnection()">연결</button>
-      </div>
-
-      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-size:12px;line-height:1.8;color:var(--ink-light);">
-        <strong style="color:var(--ink);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;display:block;margin-bottom:10px;">Brother QL-820NWB 연결 방법</strong>
-        1. 프린터를 같은 Wi-Fi에 연결하세요<br>
-        2. 프린터 IP 주소를 확인하세요 (프린터 설정 → 네트워크 정보)<br>
-        3. 위에 IP를 입력하고 연결 버튼을 누르세요<br>
-        4. 연결 성공 시 테스트 라벨이 출력됩니다<br><br>
-        <span style="color:var(--accent);">※ 실제 인쇄는 Brother b-PAC SDK 또는 로컬 서버 설치가 필요합니다</span>
-      </div>
-
-      <div class="section-divider"></div>
-
-      <div class="admin-section-title">테스트 인쇄</div>
-      <button class="add-plant-btn" onclick="testPrint()" style="border-style:solid;background:var(--white);">
-        테스트 라벨 출력
-      </button>
-    </div>
-
-    <!-- QR TAB -->
-    <div class="admin-panel" id="adminQr">
-      <div class="admin-section-title">QR 코드</div>
-
-      <div class="qr-section">
-        <div class="qr-mock">QR</div>
-        <div class="qr-url" id="qrUrl">이 페이지 URL을 QR로 만들어 사용하세요</div>
-        <button class="qr-download-btn" onclick="copyUrl()">URL 복사</button>
-      </div>
-
-      <div class="section-divider"></div>
-
-      <div style="font-size:12px;color:var(--ink-light);line-height:1.8;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
-        <strong style="color:var(--ink);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;display:block;margin-bottom:10px;">QR 설치 방법</strong>
-        1. URL을 복사하세요<br>
-        2. qr.io, canva 등에서 QR 이미지 생성<br>
-        3. 카운터 혹은 모종 트레이 옆에 부착<br>
-        4. 손님이 스캔 → 바로 이 페이지로 연결됩니다
-      </div>
-    </div>
+    <div id="admList"></div>
+    <button class="adm-add" onclick="openModal()">+ 새 식물 추가</button>
   </div>
 </div>
 
-<!-- ════════ MODAL ════════ -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
-  <div class="modal">
-    <div class="modal-title" id="modalTitle">새 식물 추가</div>
+<!-- ══════════════ MODAL ══════════════ -->
+<div class="m-ov" id="mOv" onclick="closeModalOut(event)">
+  <div class="m-box">
+    <div class="m-ttl" id="mTtl">새 식물 추가</div>
+    <input type="hidden" id="eId">
 
-    <input type="hidden" id="editingId">
-
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">식물 이름 (한글)</label>
-        <input type="text" class="form-input" id="fNameKo" placeholder="몬스테라">
-      </div>
-      <div class="form-group">
-        <label class="form-label">식물 이름 (영문)</label>
-        <input type="text" class="form-input" id="fNameEn" placeholder="Monstera deliciosa">
-      </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">이름 (한글)</label><input type="text" class="fi" id="fKo" placeholder="몬스테라"></div>
+      <div class="fg"><label class="fl">이름 (영문)</label><input type="text" class="fi" id="fEn" placeholder="Monstera deliciosa"></div>
     </div>
 
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">물 주기</label>
-        <input type="text" class="form-input" id="fWater" placeholder="주 1회">
-      </div>
-      <div class="form-group">
-        <label class="form-label">햇빛</label>
-        <input type="text" class="form-input" id="fSun" placeholder="반음지">
-      </div>
+    <div class="fg">
+      <label class="fl">사진 URL (쉼표로 여러 장)</label>
+      <input type="text" class="fi" id="fImgs" placeholder="https://...jpg, https://...jpg">
+      <div class="fh">Imgur / GitHub raw URL 권장. Notion: 이미지 우클릭 → 이미지 주소 복사</div>
     </div>
 
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">최적 온도</label>
-        <input type="text" class="form-input" id="fTemp" placeholder="18–28°C">
-      </div>
-      <div class="form-group">
-        <label class="form-label">통풍</label>
-        <input type="text" class="form-input" id="fAir" placeholder="보통">
-      </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">물 주기</label><input type="text" class="fi" id="fWater" placeholder="주 1회"></div>
+      <div class="fg"><label class="fl">햇빛</label><input type="text" class="fi" id="fSun" placeholder="반음지"></div>
     </div>
-
-    <div class="form-group">
-      <label class="form-label">한 줄 감성 카피</label>
-      <input type="text" class="form-input" id="fCopy" placeholder="빛을 기억하는 잎, 그늘에서도 단단하게.">
+    <div class="fr">
+      <div class="fg"><label class="fl">최적 온도</label><input type="text" class="fi" id="fTemp" placeholder="18–28°C"></div>
+      <div class="fg"><label class="fl">통풍</label><input type="text" class="fi" id="fAir" placeholder="보통"></div>
     </div>
+    <div class="fg"><label class="fl">한 줄 감성 카피</label><input type="text" class="fi" id="fCopy" placeholder="빛을 기억하는 잎, 그늘에서도 단단하게."></div>
 
-    <div class="modal-actions">
-      <button class="modal-cancel-btn" onclick="closeModal()">취소</button>
-      <button class="modal-save-btn" onclick="savePlant()">저장</button>
+    <div class="m-acts">
+      <button class="m-cancel" onclick="closeModal()">취소</button>
+      <button class="m-save" onclick="savePlant()">저장</button>
     </div>
   </div>
 </div>
 
 <script>
-// ── DATA ──
-let plants = JSON.parse(localStorage.getItem('nokchilog_plants') || 'null') || [
-  {
-    id: 1, nameKo: '몬스테라', nameEn: 'Monstera deliciosa',
-    water: '주 1회', sun: '반음지', temp: '18–28°C',
-    air: '보통 (주 2–3회 환기)', copy: '빛을 기억하는 잎, 그늘에서도 단단하게.'
-  },
-  {
-    id: 2, nameKo: '산세베리아', nameEn: 'Sansevieria trifasciata',
-    water: '월 1–2회', sun: '음지~양지', temp: '15–30°C',
-    air: '강함에 잘 견딤', copy: '잊혀도 살아남는 것들에 대하여.'
-  },
-  {
-    id: 3, nameKo: '스킨답서스', nameEn: 'Epipremnum aureum',
-    water: '주 1–2회', sun: '반음지', temp: '15–25°C',
-    air: '보통', copy: '어디서든 뿌리를 내리는 힘.'
-  },
-  {
-    id: 4, nameKo: '선인장', nameEn: 'Cactus spp.',
-    water: '월 1회', sun: '직사광선', temp: '20–35°C',
-    air: '통풍 필수', copy: '침묵으로 꽉 찬 식물.'
-  },
+// ══════════════════════════════
+// DATA
+// ══════════════════════════════
+let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
+  { id:1, nameKo:'몬스테라', nameEn:'Monstera deliciosa',
+    images:['https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=600'],
+    water:'주 1회', sun:'반음지', temp:'18–28°C', air:'보통 (주 2–3회 환기)',
+    copy:'빛을 기억하는 잎, 그늘에서도 단단하게.' },
+  { id:2, nameKo:'산세베리아', nameEn:'Sansevieria trifasciata',
+    images:['https://images.unsplash.com/photo-1599598425947-5202edd56fdf?w=600'],
+    water:'월 1–2회', sun:'음지~양지', temp:'15–30°C', air:'강함에 잘 견딤',
+    copy:'잊혀도 살아남는 것들에 대하여.' },
+  { id:3, nameKo:'스킨답서스', nameEn:'Epipremnum aureum',
+    images:['https://images.unsplash.com/photo-1585584114963-503344a119b0?w=600'],
+    water:'주 1–2회', sun:'반음지', temp:'15–25°C', air:'보통',
+    copy:'어디서든 뿌리를 내리는 힘.' },
+  { id:4, nameKo:'선인장', nameEn:'Cactus spp.',
+    images:['https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600'],
+    water:'월 1회', sun:'직사광선', temp:'20–35°C', air:'통풍 필수',
+    copy:'침묵으로 꽉 찬 식물.' },
+  { id:5, nameKo:'고무나무', nameEn:'Ficus elastica',
+    images:['https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=600'],
+    water:'주 1회', sun:'밝은 간접광', temp:'16–26°C', air:'보통',
+    copy:'묵직하게, 그러나 부드럽게.' },
+  { id:6, nameKo:'틸란드시아', nameEn:'Tillandsia spp.',
+    images:['https://images.unsplash.com/photo-1509423350716-97f9360b4e09?w=600'],
+    water:'주 2–3회 분무', sun:'밝은 간접광', temp:'10–32°C', air:'통풍 필수',
+    copy:'흙 없이도 살아가는 방법.' },
 ];
 
 let selectedPlant = null;
+let fromScreen = 'screenMain';
 let currentTool = 'draw';
-let currentColor = '#1A1A18';
-const colors = ['#1A1A18', '#3D5A3E', '#8B6F47', '#C4C2BC'];
-let isDrawing = false;
-let lastX = 0, lastY = 0;
-let printerIp = '';
+let currentColor = '#FFFFFF';
+const colors = ['#FFFFFF','#3D5A3E','#8B6F47','#555555'];
+let isDrawing = false, lastX = 0, lastY = 0;
+let searchOpen = false;
 
-function savePlants() {
-  localStorage.setItem('nokchilog_plants', JSON.stringify(plants));
-}
+const ADMIN_PIN = '0000'; // ← 여기서 비밀번호 변경
 
-// ── SCREENS ──
+function savePlants() { localStorage.setItem('nkl_v4', JSON.stringify(plants)); }
+
+// ══════════════════════════════
+// SCREENS
+// ══════════════════════════════
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
+  window.scrollTo(0,0);
+}
+
+function navGo(screen) {
+  // 네비 active 상태
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (screen === 'screenMain') {
+    document.getElementById('navLogo').classList.add('active');
+    showScreen('screenMain');
+  } else if (screen === 'screenArchive') {
+    document.getElementById('navArchive').classList.add('active');
+    renderArchive();
+    showScreen('screenArchive');
+  }
+  // 검색 닫기
+  closeSearch();
+}
+
+function toggleSearch() {
+  searchOpen = !searchOpen;
+  document.getElementById('searchOverlay').classList.toggle('open', searchOpen);
+  document.getElementById('navSearch').classList.toggle('active', searchOpen);
+  if (searchOpen) {
+    setTimeout(() => document.getElementById('sInp').focus(), 200);
+  } else {
+    clearSearch();
+  }
+}
+
+function closeSearch() {
+  searchOpen = false;
+  document.getElementById('searchOverlay').classList.remove('open');
+  document.getElementById('navSearch').classList.remove('active');
+  clearSearch();
 }
 
 function goAdmin() {
+  const pin = prompt('관리자 비밀번호를 입력하세요:');
+  if (pin === null) return;
+  if (pin !== ADMIN_PIN) {
+    alert('비밀번호가 틀렸습니다.');
+    return;
+  }
   renderAdminList();
   showScreen('screenAdmin');
 }
 
-// ── PLANT LIST ──
-function renderPlantList(list) {
-  const el = document.getElementById('plantList');
+// ══════════════════════════════
+// ASCII ENGINE
+// ══════════════════════════════
+const ASCII = ' .,:;+*?%S#@';
+
+function renderASCII(imgEl, canvas) {
+  const W = canvas.offsetWidth; const H = canvas.offsetHeight;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const FS = 7; const CW = FS * 0.56; const CH = FS;
+  const cols = Math.floor(W / CW); const rows = Math.floor(H / CH);
+  const off = document.createElement('canvas');
+  off.width = cols; off.height = rows;
+  const octx = off.getContext('2d');
+  octx.drawImage(imgEl, 0, 0, cols, rows);
+  const px = octx.getImageData(0,0,cols,rows).data;
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#fff';
+  ctx.font = `${FS}px 'Courier New', monospace`;
+  ctx.textBaseline = 'top';
+  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
+    const i=(r*cols+c)*4;
+    const b=(px[i]*.299+px[i+1]*.587+px[i+2]*.114)/255;
+    ctx.fillText(ASCII[Math.floor(b*(ASCII.length-1))], c*CW, r*CH);
+  }
+}
+
+function attachAscii(triggerEl, imgEl, asciiWrap) {
+  const cv = asciiWrap.querySelector('canvas');
+  let done = false;
+  const go = () => {
+    triggerEl.addEventListener('mouseenter', () => {
+      if (!done && imgEl.complete && imgEl.naturalWidth > 0) {
+        cv.style.width = '100%'; cv.style.height = '100%';
+        renderASCII(imgEl, cv);
+        done = true;
+      }
+    });
+    window.addEventListener('resize', () => { done = false; });
+  };
+  if (imgEl.complete && imgEl.naturalWidth > 0) go();
+  else imgEl.addEventListener('load', go);
+}
+
+// ══════════════════════════════
+// MAIN LIST
+// ══════════════════════════════
+function renderList(list) {
+  const el = document.getElementById('mainScroll');
+
   if (!list.length) {
-    el.innerHTML = '<div class="empty-state">검색 결과가 없습니다.<br>다른 이름으로 찾아보세요.</div>';
+    el.innerHTML = '<div class="empty-msg">검색 결과 없음</div>';
     return;
   }
-  el.innerHTML = list.map(p => `
-    <div class="plant-card" onclick="selectPlant(${p.id})">
-      <div class="plant-card-info">
-        <div class="plant-card-name-ko">${p.nameKo}</div>
-        <div class="plant-card-name-en">${p.nameEn}</div>
+
+  el.innerHTML = list.map(p => {
+    const img = p.images && p.images[0];
+    return `
+      <div class="plant-item" onclick="selectPlant(${p.id},'screenMain')">
+        <div class="item-img-wrap">
+          ${img
+            ? `<img class="item-img" src="${img}" alt="${p.nameKo}" crossorigin="anonymous" loading="lazy">
+               <div class="item-ascii"><canvas></canvas></div>`
+            : `<div class="item-placeholder">${p.nameKo.charAt(0)}</div>`
+          }
+        </div>
+        <div class="item-caption">
+          <span class="item-caption-line">${p.nameKo} — ${p.nameEn}</span>
+          <span class="item-caption-copy">${p.copy}</span>
+        </div>
       </div>
-      <div class="plant-card-arrow">›</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
+
+  el.querySelectorAll('.plant-item').forEach(item => {
+    const imgEl = item.querySelector('.item-img');
+    const asciiDiv = item.querySelector('.item-ascii');
+    const wrap = item.querySelector('.item-img-wrap');
+    if (!imgEl || !asciiDiv || !wrap) return;
+    attachAscii(wrap, imgEl, asciiDiv);
+  });
 }
 
 function filterPlants(q) {
-  const filtered = plants.filter(p =>
+  document.getElementById('sClear').classList.toggle('on', q.length > 0);
+  renderList(q ? plants.filter(p =>
     p.nameKo.includes(q) || p.nameEn.toLowerCase().includes(q.toLowerCase())
-  );
-  renderPlantList(filtered);
-}
-
-function selectPlant(id) {
-  selectedPlant = plants.find(p => p.id === id);
-  document.getElementById('selectedPlantName').textContent = selectedPlant.nameKo;
-  document.getElementById('selectedPlantEn').textContent = selectedPlant.nameEn;
-  clearCanvas();
-  showScreen('screenDrawing');
-  setTimeout(initCanvas, 100);
-}
-
-// ── CANVAS ──
-function initCanvas() {
-  const canvas = document.getElementById('drawCanvas');
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * window.devicePixelRatio;
-  canvas.height = rect.height * window.devicePixelRatio;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  ctx.fillStyle = '#FDFCFA';
-  ctx.fillRect(0, 0, rect.width, rect.height);
-}
-
-function getCtx() { return document.getElementById('drawCanvas').getContext('2d'); }
-
-function getPos(e, canvas) {
-  const rect = canvas.getBoundingClientRect();
-  const touch = e.touches ? e.touches[0] : e;
-  return {
-    x: touch.clientX - rect.left,
-    y: touch.clientY - rect.top
-  };
-}
-
-function startDraw(e) {
-  e.preventDefault();
-  isDrawing = true;
-  const canvas = document.getElementById('drawCanvas');
-  const pos = getPos(e, canvas);
-  lastX = pos.x; lastY = pos.y;
-}
-
-function draw(e) {
-  e.preventDefault();
-  if (!isDrawing) return;
-  const canvas = document.getElementById('drawCanvas');
-  const ctx = getCtx();
-  const pos = getPos(e, canvas);
-  const size = parseInt(document.getElementById('brushSize').value);
-
-  ctx.beginPath();
-  ctx.moveTo(lastX, lastY);
-  ctx.lineTo(pos.x, pos.y);
-  ctx.strokeStyle = currentTool === 'erase' ? '#FDFCFA' : currentColor;
-  ctx.lineWidth = currentTool === 'erase' ? size * 3 : size;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-
-  lastX = pos.x; lastY = pos.y;
-}
-
-function stopDraw(e) { isDrawing = false; }
-
-function clearCanvas() {
-  const canvas = document.getElementById('drawCanvas');
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#FDFCFA';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-function setTool(t) {
-  currentTool = t;
-  document.getElementById('btnDraw').classList.toggle('active', t === 'draw');
-  document.getElementById('btnErase').classList.toggle('active', t === 'erase');
-}
-
-function setColor(i) {
-  currentColor = colors[i];
-  document.querySelectorAll('.color-dot').forEach((d, idx) => {
-    d.classList.toggle('active', idx === i);
-  });
-  setTool('draw');
-}
-
-// Attach events
-const canvas = document.getElementById('drawCanvas');
-canvas.addEventListener('mousedown', startDraw);
-canvas.addEventListener('mousemove', draw);
-canvas.addEventListener('mouseup', stopDraw);
-canvas.addEventListener('mouseleave', stopDraw);
-canvas.addEventListener('touchstart', startDraw, { passive: false });
-canvas.addEventListener('touchmove', draw, { passive: false });
-canvas.addEventListener('touchend', stopDraw);
-
-// ── PREVIEW ──
-function goPreview() {
-  if (!selectedPlant) return;
-
-  // populate label
-  document.getElementById('labelNameKo').textContent = selectedPlant.nameKo;
-  document.getElementById('labelNameEn').textContent = selectedPlant.nameEn;
-  document.getElementById('labelWater').textContent = selectedPlant.water;
-  document.getElementById('labelSun').textContent = selectedPlant.sun;
-  document.getElementById('labelTemp').textContent = selectedPlant.temp;
-  document.getElementById('labelAir').textContent = selectedPlant.air;
-  document.getElementById('labelCopy').textContent = selectedPlant.copy;
-
-  const now = new Date();
-  document.getElementById('labelDate').textContent =
-    `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-
-  // drawing
-  const drawingCanvas = document.getElementById('drawCanvas');
-  document.getElementById('labelDrawingImg').src = drawingCanvas.toDataURL('image/png');
-
-  // mock barcode
-  const bar = document.getElementById('barcodeEl');
-  const heights = [14,9,14,6,12,9,14,7,12,14,9,6,14,9,12];
-  bar.innerHTML = heights.map(h =>
-    `<span style="height:${h}px;background:var(--ink);display:block;width:1.5px;"></span>`
-  ).join('');
-
-  showScreen('screenPreview');
-}
-
-// ── PRINT ──
-function printLabel() {
-  const ip = document.getElementById('printerIp')?.value || printerIp;
-
-  // Use window.print() as fallback (browser print dialog targeting label)
-  const labelEl = document.getElementById('labelPreview');
-
-  // Create a print-specific window
-  const printWin = window.open('', '_blank', 'width=300,height=600');
-  printWin.document.write(`
-    <!DOCTYPE html><html><head>
-    <style>
-      * { margin:0; padding:0; box-sizing:border-box; }
-      body { font-family: 'Helvetica Neue', sans-serif; width: 62mm; }
-      @media print {
-        @page { size: 62mm auto; margin: 0; }
-        body { -webkit-print-color-adjust: exact; }
-      }
-    </style>
-    </head><body>
-    ${labelEl.innerHTML}
-    </body></html>
-  `);
-  printWin.document.close();
-  printWin.onload = () => {
-    printWin.print();
-    printWin.close();
-  };
-
-  showScreen('screenSuccess');
-}
-
-function restart() {
-  selectedPlant = null;
-  document.getElementById('searchInput').value = '';
-  renderPlantList(plants);
-  showScreen('screenCustomer');
-}
-
-// ── ADMIN ──
-function switchAdminTab(tab, btn) {
-  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-
-  if (tab === 'qr') {
-    document.getElementById('qrUrl').textContent = window.location.href;
+  ) : plants);
+  // 검색 중엔 메인으로
+  if (!document.getElementById('screenMain').classList.contains('active')) {
+    showScreen('screenMain');
   }
 }
 
-function renderAdminList() {
-  const el = document.getElementById('adminPlantList');
-  el.innerHTML = plants.map(p => `
-    <div class="plant-admin-item">
-      <div>
-        <div class="plant-admin-item-name">${p.nameKo}</div>
-        <div class="plant-admin-item-en">${p.nameEn}</div>
+function clearSearch() {
+  document.getElementById('sInp').value = '';
+  document.getElementById('sClear').classList.remove('on');
+  renderList(plants);
+}
+
+// 로고 롱프레스 → 관리자
+let logoTimer = null;
+document.getElementById('navLogo').addEventListener('mousedown', () => {
+  logoTimer = setTimeout(() => goAdmin(), 1500);
+});
+document.getElementById('navLogo').addEventListener('mouseup', () => clearTimeout(logoTimer));
+document.getElementById('navLogo').addEventListener('mouseleave', () => clearTimeout(logoTimer));
+document.getElementById('navLogo').addEventListener('touchstart', () => {
+  logoTimer = setTimeout(() => goAdmin(), 1500);
+}, {passive:true});
+document.getElementById('navLogo').addEventListener('touchend', () => clearTimeout(logoTimer));
+
+
+// ══════════════════════════════
+// ARCHIVE
+// ══════════════════════════════
+function renderArchive() {
+  document.getElementById('aInfo').textContent = `${plants.length} specimens\nNokchilog, Seoul`;
+  const grid = document.getElementById('aGrid');
+  grid.innerHTML = plants.map(p => {
+    const img = p.images && p.images[0];
+    return `
+      <div class="a-card" onclick="selectPlant(${p.id},'screenArchive')">
+        ${img
+          ? `<img class="a-img" src="${img}" alt="${p.nameKo}" crossorigin="anonymous" loading="lazy">
+             <div class="a-ascii"><canvas></canvas></div>`
+          : `<div class="a-placeholder">${p.nameKo.charAt(0)}</div>`
+        }
+        <div class="a-label">
+          <div class="a-ko">${p.nameKo}</div>
+          <div class="a-en">${p.nameEn}</div>
+        </div>
       </div>
-      <div class="plant-admin-actions">
-        <button class="admin-edit-btn" onclick="openModal(${p.id})">수정</button>
-        <button class="admin-del-btn" onclick="deletePlant(${p.id})">삭제</button>
+    `;
+  }).join('');
+  grid.querySelectorAll('.a-card').forEach(card => {
+    const imgEl = card.querySelector('.a-img');
+    const asc = card.querySelector('.a-ascii');
+    if (!imgEl || !asc) return;
+    attachAscii(card, imgEl, asc);
+  });
+}
+
+// ══════════════════════════════
+// DETAIL
+// ══════════════════════════════
+function selectPlant(id, from) {
+  selectedPlant = plants.find(p => p.id === id);
+  fromScreen = from || 'screenMain';
+  document.getElementById('dSm').textContent = selectedPlant.nameKo;
+  document.getElementById('dCopy').textContent = selectedPlant.copy;
+  document.getElementById('dWater').textContent = selectedPlant.water;
+  document.getElementById('dSun').textContent = selectedPlant.sun;
+  document.getElementById('dTemp').textContent = selectedPlant.temp;
+  document.getElementById('dAir').textContent = selectedPlant.air;
+
+  const mEl = document.getElementById('dMasonry');
+  const imgs = selectedPlant.images || [];
+  if (!imgs.length) {
+    mEl.innerHTML = '<div style="padding:40px 24px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#333;">사진 없음</div>';
+  } else {
+    mEl.innerHTML = imgs.map(src => `
+      <div class="d-mitem">
+        <img class="d-mimg" src="${src}" alt="" crossorigin="anonymous" loading="lazy">
+        <div class="d-mascii"><canvas></canvas></div>
+      </div>
+    `).join('');
+    mEl.querySelectorAll('.d-mitem').forEach(item => {
+      const imgEl = item.querySelector('.d-mimg');
+      const asc = item.querySelector('.d-mascii');
+      if (!imgEl || !asc) return;
+      attachAscii(item, imgEl, asc);
+    });
+  }
+  showScreen('screenDetail');
+}
+
+function detailBack() { showScreen(fromScreen); }
+
+function goDrawing() {
+  clearCanvas();
+  showScreen('screenDrawing');
+  setTimeout(initCanvas, 80);
+}
+
+// ══════════════════════════════
+// CANVAS
+// ══════════════════════════════
+function initCanvas() {
+  const c = document.getElementById('drawCanvas');
+  const r = c.getBoundingClientRect();
+  c.width = r.width * devicePixelRatio;
+  c.height = r.height * devicePixelRatio;
+  const ctx = c.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.fillStyle = '#111'; ctx.fillRect(0,0,r.width,r.height);
+}
+
+const dc = document.getElementById('drawCanvas');
+function getPos(e, el) {
+  const r = el.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX-r.left, y: t.clientY-r.top };
+}
+
+dc.addEventListener('mousedown', e=>{isDrawing=true;const p=getPos(e,dc);lastX=p.x;lastY=p.y;});
+dc.addEventListener('mousemove', e=>{
+  if(!isDrawing)return;
+  const ctx=dc.getContext('2d');const p=getPos(e,dc);const sz=parseInt(document.getElementById('bSz').value);
+  ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);
+  ctx.strokeStyle=currentTool==='erase'?'#111':currentColor;
+  ctx.lineWidth=currentTool==='erase'?sz*3:sz;
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+  lastX=p.x;lastY=p.y;
+});
+dc.addEventListener('mouseup',()=>isDrawing=false);
+dc.addEventListener('mouseleave',()=>isDrawing=false);
+dc.addEventListener('touchstart',e=>{e.preventDefault();isDrawing=true;const p=getPos(e,dc);lastX=p.x;lastY=p.y;},{passive:false});
+dc.addEventListener('touchmove',e=>{
+  e.preventDefault();if(!isDrawing)return;
+  const ctx=dc.getContext('2d');const p=getPos(e,dc);const sz=parseInt(document.getElementById('bSz').value);
+  ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);
+  ctx.strokeStyle=currentTool==='erase'?'#111':currentColor;
+  ctx.lineWidth=currentTool==='erase'?sz*3:sz;
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+  lastX=p.x;lastY=p.y;
+},{passive:false});
+dc.addEventListener('touchend',()=>isDrawing=false);
+
+function clearCanvas() {
+  const c=document.getElementById('drawCanvas');
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#111';ctx.fillRect(0,0,c.width,c.height);
+}
+function setTool(t) {
+  currentTool=t;
+  document.getElementById('btnDrw').classList.toggle('on',t==='draw');
+  document.getElementById('btnErs').classList.toggle('on',t==='erase');
+}
+function setColor(i) {
+  currentColor=colors[i];
+  document.querySelectorAll('.cdot').forEach((d,idx)=>d.classList.toggle('on',idx===i));
+  setTool('draw');
+}
+
+// ══════════════════════════════
+// PREVIEW & PRINT
+// ══════════════════════════════
+function goPreview() {
+  if (!selectedPlant) return;
+  document.getElementById('lKo').textContent = selectedPlant.nameKo;
+  document.getElementById('lEn').textContent = selectedPlant.nameEn;
+  document.getElementById('lWater').textContent = selectedPlant.water;
+  document.getElementById('lSun').textContent = selectedPlant.sun;
+  document.getElementById('lTemp').textContent = selectedPlant.temp;
+  document.getElementById('lAir').textContent = selectedPlant.air;
+  document.getElementById('lCopy').textContent = selectedPlant.copy;
+  const now = new Date();
+  document.getElementById('lDate').textContent =
+    `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('lImg').src = document.getElementById('drawCanvas').toDataURL('image/png');
+  document.getElementById('lBar').innerHTML =
+    [14,9,14,6,12,9,14,7,12,14,9].map(h=>`<span style="height:${h}px"></span>`).join('');
+  showScreen('screenPreview');
+}
+
+function printLabel() {
+  const el = document.getElementById('labelPreview');
+  const pw = window.open('','_blank','width=300,height=600');
+  pw.document.write(`<!DOCTYPE html><html><head>
+    <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;width:62mm;background:#F0EDE6}
+    @media print{@page{size:62mm auto;margin:0}body{-webkit-print-color-adjust:exact}}</style>
+    </head><body>${el.innerHTML}</body></html>`);
+  pw.document.close();
+  pw.onload=()=>{pw.print();pw.close();};
+  showScreen('screenSuccess');
+}
+
+function restart() { selectedPlant=null; closeSearch(); navGo('screenMain'); }
+
+// ══════════════════════════════
+// ADMIN
+// ══════════════════════════════
+function renderAdminList() {
+  document.getElementById('admList').innerHTML = plants.map(p=>`
+    <div class="adm-row">
+      <div><div class="adm-nm">${p.nameKo}</div><div class="adm-en">${p.nameEn}</div></div>
+      <div class="adm-btns">
+        <button class="adm-btn" onclick="openModal(${p.id})">수정</button>
+        <button class="adm-btn del" onclick="deletePlant(${p.id})">삭제</button>
       </div>
     </div>
   `).join('');
 }
 
-// ── MODAL ──
 function openModal(id) {
-  document.getElementById('editingId').value = id || '';
+  document.getElementById('eId').value = id||'';
   if (id) {
-    const p = plants.find(pl => pl.id === id);
-    document.getElementById('modalTitle').textContent = '식물 수정';
-    document.getElementById('fNameKo').value = p.nameKo;
-    document.getElementById('fNameEn').value = p.nameEn;
-    document.getElementById('fWater').value = p.water;
-    document.getElementById('fSun').value = p.sun;
-    document.getElementById('fTemp').value = p.temp;
-    document.getElementById('fAir').value = p.air;
-    document.getElementById('fCopy').value = p.copy;
+    const p = plants.find(pl=>pl.id===id);
+    document.getElementById('mTtl').textContent='식물 수정';
+    document.getElementById('fKo').value=p.nameKo;
+    document.getElementById('fEn').value=p.nameEn;
+    document.getElementById('fImgs').value=(p.images||[]).join(', ');
+    document.getElementById('fWater').value=p.water;
+    document.getElementById('fSun').value=p.sun;
+    document.getElementById('fTemp').value=p.temp;
+    document.getElementById('fAir').value=p.air;
+    document.getElementById('fCopy').value=p.copy;
   } else {
-    document.getElementById('modalTitle').textContent = '새 식물 추가';
-    ['fNameKo','fNameEn','fWater','fSun','fTemp','fAir','fCopy'].forEach(f => {
-      document.getElementById(f).value = '';
-    });
+    document.getElementById('mTtl').textContent='새 식물 추가';
+    ['fKo','fEn','fImgs','fWater','fSun','fTemp','fAir','fCopy'].forEach(f=>document.getElementById(f).value='');
   }
-  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('mOv').classList.add('open');
 }
 
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
-}
-
-function closeModalOutside(e) {
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
-}
+function closeModal() { document.getElementById('mOv').classList.remove('open'); }
+function closeModalOut(e) { if(e.target===document.getElementById('mOv')) closeModal(); }
 
 function savePlant() {
-  const id = document.getElementById('editingId').value;
-  const data = {
-    nameKo: document.getElementById('fNameKo').value.trim(),
-    nameEn: document.getElementById('fNameEn').value.trim(),
-    water: document.getElementById('fWater').value.trim(),
-    sun: document.getElementById('fSun').value.trim(),
-    temp: document.getElementById('fTemp').value.trim(),
-    air: document.getElementById('fAir').value.trim(),
-    copy: document.getElementById('fCopy').value.trim(),
+  const id=document.getElementById('eId').value;
+  const raw=document.getElementById('fImgs').value;
+  const images=raw?raw.split(',').map(s=>s.trim()).filter(Boolean):[];
+  const data={
+    nameKo:document.getElementById('fKo').value.trim(),
+    nameEn:document.getElementById('fEn').value.trim(),
+    images,
+    water:document.getElementById('fWater').value.trim(),
+    sun:document.getElementById('fSun').value.trim(),
+    temp:document.getElementById('fTemp').value.trim(),
+    air:document.getElementById('fAir').value.trim(),
+    copy:document.getElementById('fCopy').value.trim(),
   };
-  if (!data.nameKo) { alert('식물 이름을 입력해주세요'); return; }
-
-  if (id) {
-    const idx = plants.findIndex(p => p.id === parseInt(id));
-    plants[idx] = { ...plants[idx], ...data };
+  if(!data.nameKo){alert('식물 이름을 입력해주세요');return;}
+  if(id){
+    const idx=plants.findIndex(p=>p.id===parseInt(id));
+    plants[idx]={...plants[idx],...data};
   } else {
-    data.id = Date.now();
-    plants.push(data);
+    data.id=Date.now();plants.push(data);
   }
-
-  savePlants();
-  renderAdminList();
-  renderPlantList(plants);
-  closeModal();
+  savePlants();renderAdminList();renderList(plants);closeModal();
 }
 
 function deletePlant(id) {
-  if (!confirm('이 식물을 삭제할까요?')) return;
-  plants = plants.filter(p => p.id !== id);
-  savePlants();
-  renderAdminList();
-  renderPlantList(plants);
+  if(!confirm('삭제할까요?'))return;
+  plants=plants.filter(p=>p.id!==id);
+  savePlants();renderAdminList();renderList(plants);
 }
 
-// ── PRINTER ──
-function testPrinterConnection() {
-  const ip = document.getElementById('printerIp').value.trim();
-  if (!ip) { alert('IP 주소를 입력하세요'); return; }
-  printerIp = ip;
-  document.getElementById('statusText').textContent = '연결 중...';
-
-  // Simulate connection test
-  setTimeout(() => {
-    document.getElementById('statusDot').className = 'status-dot connected';
-    document.getElementById('statusText').textContent = `연결됨 — ${ip}`;
-  }, 1200);
-}
-
-function testPrint() {
-  alert('테스트 라벨을 출력합니다.\n(실제 출력은 Brother b-PAC SDK 또는 로컬 서버 연동 후 동작합니다)');
-}
-
-function copyUrl() {
-  navigator.clipboard.writeText(window.location.href).then(() => {
-    alert('URL이 복사되었습니다!');
-  });
-}
-
-// ── INIT ──
-renderPlantList(plants);
+// ══════════════════════════════
+// INIT
+// ══════════════════════════════
+renderList(plants);
 </script>
 </body>
 </html>
