@@ -9,8 +9,8 @@
 
 @font-face {
   font-family: 'MonoplexKR';
-  src: url('./MonoplexKR-Text.ttf') format('truetype');
-  font-weight: normal;
+  src: url('./MonoplexKR-Light.ttf') format('truetype');
+  font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
@@ -26,19 +26,64 @@
 :root {
   --bg: #000000;
   --white: #FFFFFF;
-  --caption: #888884;
+  --caption: #FFFFFF;
   --border: rgba(255,255,255,0.1);
   --mono: 'MonoplexKR', 'Courier New', Courier, monospace;
   --sans: 'MonoplexKR', 'Helvetica Neue', 'Apple SD Gothic Neo', Arial, sans-serif;
+  /* MonoplexKR type spec */
+  --mono-size: 14px;
+  --mono-lh: 18.2px;
+  --mono-ls: -0.015em;
+}
+
+/* MonoplexKR 전역 스펙 */
+[class*="item-caption"],
+[class*="entry-caption"],
+[class*="a-ko"], [class*="a-en"],
+[class*="d-copy"], [class*="d-key"], [class*="d-val"],
+[class*="d-name"], [class*="d-cta"],
+[class*="archive-ttl"], [class*="archive-info"],
+[class*="adm-"], [class*="back"],
+[class*="lb-"], [class*="lp-"],
+[class*="suc-"], [class*="drw-"],
+[class*="m-"] {
+  font-family: var(--mono);
+  font-weight: 300;
 }
 
 html, body {
   background: var(--bg);
   color: var(--white);
-  font-family: var(--mono);
+  font-family: 'Archivo', 'MonoplexKR', sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+/* MonoplexKR Light 전역 스펙 적용 */
+.item-caption-line,
+.item-caption-copy,
+.entry-caption-name,
+.entry-caption-copy,
+.a-ko, .a-en,
+.archive-ttl, .archive-info,
+.d-copy, .d-key, .d-val,
+.d-name-sm, .d-cta-sub, .d-cta-btn,
+.back,
+.drw-prompt,
+.lp-eyebrow,
+.lb-shop, .lb-ko, .lb-en, .lb-key, .lb-val, .lb-copy, .lb-date,
+.suc-ttl, .suc-sub,
+.adm-nm, .adm-en, .adm-add,
+.m-ttl, .fl, .fi, .fh,
+.dc, .br-lbl,
+.go-preview, .act,
+.s-overlay-input {
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: var(--mono-size);
+  line-height: var(--mono-lh);
+  letter-spacing: var(--mono-ls);
 }
 
 .screen { display: none; }
@@ -51,12 +96,12 @@ html, body {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 200;
-  height: 48px;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  background: rgba(0,0,0,0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  background: #000;
 }
 
 .nav-item {
@@ -64,43 +109,42 @@ html, body {
   align-items: center;
   justify-content: center;
   font-family: 'Archivo', sans-serif;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 400;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.28);
+  color: rgba(255,255,255,0.6);
   cursor: pointer;
   border: none;
   background: none;
   transition: color 0.15s;
+  padding: 0;
 }
 
 .nav-item:hover { color: var(--white); }
 .nav-item.active { color: var(--white); }
 
-/* SEARCH 아이템 — SEARCH 텍스트 + 밑줄 + 돋보기 */
+/* SEARCH 아이템 */
 .nav-search-inner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 0 16px;
+  gap: 6px;
 }
 
 .nav-search-label {
   font-family: 'Archivo', sans-serif;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 400;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: inherit;
   flex-shrink: 0;
 }
 
 .nav-search-line {
-  flex: 1;
+  width: 40px;
   height: 1px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.2);
   position: relative;
   overflow: hidden;
 }
@@ -117,19 +161,18 @@ html, body {
 .nav-item.active .nav-search-line::after { left: 0; }
 
 .nav-search-icon {
-  font-size: 12px;
+  font-size: 11px;
   color: inherit;
   flex-shrink: 0;
 }
 
-/* 실제 검색 인풋 — 숨겨져 있다가 SEARCH 누르면 나타남 */
+/* 검색 오버레이 */
 .search-overlay {
   position: fixed;
-  bottom: 48px; left: 0; right: 0;
+  bottom: 36px; left: 0; right: 0;
   z-index: 199;
-  padding: 0 24px 0;
-  background: rgba(0,0,0,0.96);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 0 24px;
+  background: #000;
   height: 0;
   overflow: hidden;
   transition: height 0.2s ease;
@@ -138,7 +181,7 @@ html, body {
 }
 
 .search-overlay.open {
-  height: 52px;
+  height: 44px;
 }
 
 .s-overlay-input {
