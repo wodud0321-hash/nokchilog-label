@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>녹취록 — 식물 라벨 시스템</title>
+<style>
+  :root {
+    --bg: #F5F2ED;
+    --white: #FDFCFA;
+    --ink: #1A1A18;
+    --ink-light: #6B6B68;
+    --ink-faint: #C4C2BC;
+    --green: #3D5A3E;
+    --green-light: #E8EDE8;
+    --green-mid: #A8BEA8;
+    --accent: #8B6F47;
+    --border: #DDD9D2;
+    --radius: 2px;
+    --font-sans: 'Helvetica Neue', 'Apple SD Gothic Neo', sans-serif;
+    --font-serif: Georgia, 'Times New Roman', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-size: 13px; letter-spacing: 0.12em; font-weight: 500;
+    color: var(--green);
+    text-transform: uppercase;
+  }
+
+  .nav-btn {
+    font-size: 11px; letter-spacing: 0.08em;
+    color: var(--ink-light); background: none; border: none;
+    cursor: pointer; text-transform: uppercase; padding: 6px 0;
+  }
+
+  .nav-btn:hover { color: var(--ink); }
+
+  .screen-content { padding-top: 52px; flex: 1; }
+
+  /* ── CUSTOMER SCREEN ── */
+  .customer-hero {
+    background: var(--green);
+    color: var(--white);
+    padding: 32px 24px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .customer-hero::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .customer-hero::after {
+    content: '';
+    position: absolute; bottom: -20px; right: 20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .hero-label {
+    font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--green-mid);
+    margin-bottom: 8px;
+  }
+
+  .hero-title {
+    font-size: 26px; font-weight: 300;
+    line-height: 1.2; letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+
+  .hero-sub {
+    font-size: 12px; color: rgba(255,255,255,0.55);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── SEARCH ── */
+  .search-area {
+    padding: 20px 20px 0;
+  }
+
+  .search-wrap {
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .search-input:focus { border-color: var(--green); }
+  .search-input::placeholder { color: var(--ink-faint); }
+
+  .search-icon {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; color: var(--ink-faint);
+  }
+
+  /* ── PLANT LIST ── */
+  .plant-list {
+    padding: 12px 20px 100px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .plant-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .plant-card:hover, .plant-card:active {
+    border-color: var(--green);
+    background: var(--green-light);
+  }
+
+  .plant-card-info {}
+  .plant-card-name-ko {
+    font-size: 15px; font-weight: 500; color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .plant-card-name-en {
+    font-size: 11px; letter-spacing: 0.06em;
+    color: var(--ink-light); text-transform: uppercase;
+  }
+
+  .plant-card-arrow {
+    color: var(--ink-faint); font-size: 18px; font-weight: 300;
+  }
+
+  .empty-state {
+    text-align: center; padding: 48px 20px;
+    color: var(--ink-light); font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* ── DRAWING SCREEN ── */
+  .drawing-header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+  }
+
+  .plant-selected-label {
+    font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--green);
+    margin-bottom: 4px;
+  }
+
+  .plant-selected-name {
+    font-size: 18px; font-weight: 400; color: var(--ink);
+  }
+
+  .plant-selected-en {
+    font-size: 11px; color: var(--ink-light);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .drawing-prompt {
+    padding: 14px 20px;
+    background: var(--green-light);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .drawing-prompt p {
+    font-size: 12px; color: var(--green);
+    line-height: 1.5; letter-spacing: 0.02em;
+  }
+
+  .canvas-wrap {
+    padding: 16px 20px;
+    flex: 1;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  #drawCanvas {
+    width: 100%;
+    aspect-ratio: 2.5/1;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: crosshair;
+    touch-action: none;
+    display: block;
+  }
+
+  .canvas-tools {
+    display: flex; gap: 8px; align-items: center;
+  }
+
+  .tool-btn {
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    border-radius: var(--radius);
+    font-size: 12px; font-family: var(--font-sans);
+    color: var(--ink); cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+
+  .tool-btn:hover { border-color: var(--ink); }
+  .tool-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+  .color-picker-wrap {
+    display: flex; gap: 6px; align-items: center; margin-left: auto;
+  }
+
+  .color-dot {
+    width: 22px; height: 22px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: border-color 0.15s;
+  }
+
+  .color-dot.active { border-color: var(--ink); }
+  .color-dot:nth-child(1) { background: #1A1A18; }
+  .color-dot:nth-child(2) { background: #3D5A3E; }
+  .color-dot:nth-child(3) { background: #8B6F47; }
+  .color-dot:nth-child(4) { background: #C4C2BC; }
+
+  .size-slider {
+    width: 60px; height: 3px;
+    -webkit-appearance: none;
+    background: var(--border);
+    outline: none; border-radius: 2px;
+  }
+
+  .size-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: var(--ink); border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .print-btn {
+    margin: 0 20px 20px;
+    width: calc(100% - 40px);
+    padding: 16px;
+    background: var(--green);
+    color: var(--white);
+    border: none; border-radius: var(--radius);
+    font-size: 13px; letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .print-btn:hover { opacity: 0.88; }
+  .print-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── LABEL PREVIEW SCREEN ── */
+  .label-preview-wrap {
+    padding: 24px 20px;
+    flex: 1;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  .preview-title {
+    font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--ink-light);
+  }
+
+  /* The label itself — 62mm wide simulated */
+  #labelPreview {
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--border);
+    font-family: var(--font-sans);
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .label-inner {
+    padding: 14px 16px;
+  }
+
+  .label-shop-name {
+    font-size: 8px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--ink-light);
+    margin-bottom: 10px;
+  }
+
+  .label-main-row {
+    display: flex; align-items: flex-start;
+    gap: 12px; margin-bottom: 10px;
+  }
+
+  .label-symbol {
+    font-size: 32px; font-weight: 700;
+    color: var(--ink); line-height: 1;
+    font-family: var(--font-serif);
+    flex-shrink: 0;
+    letter-spacing: -0.04em;
+  }
+
+  .label-name-block { flex: 1; }
+
+  .label-name-ko {
+    font-size: 16px; font-weight: 600;
+    color: var(--ink); margin-bottom: 2px;
+    letter-spacing: -0.01em;
+  }
+
+  .label-name-en {
+    font-size: 8px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-light);
+  }
+
+  .label-drawing-area {
+    width: 100%;
+    border-top: 0.5px solid var(--border);
+    border-bottom: 0.5px solid var(--border);
+    margin: 10px 0;
+    background: var(--white);
+  }
+
+  .label-drawing-area img {
+    width: 100%; display: block;
+    height: 60px; object-fit: contain;
+  }
+
+  .label-info-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6px 12px; margin-bottom: 10px;
+  }
+
+  .label-info-item {}
+
+  .label-info-key {
+    font-size: 7px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-faint);
+    margin-bottom: 1px;
+  }
+
+  .label-info-val {
+    font-size: 10px; color: var(--ink); font-weight: 500;
+  }
+
+  .label-copy {
+    font-size: 9px; color: var(--ink-light);
+    letter-spacing: 0.04em; line-height: 1.5;
+    border-top: 0.5px solid var(--border);
+    padding-top: 8px; font-style: italic;
+  }
+
+  .label-footer {
+    display: flex; justify-content: space-between;
+    align-items: center; margin-top: 8px;
+  }
+
+  .label-date {
+    font-size: 7px; color: var(--ink-faint);
+    letter-spacing: 0.08em;
+  }
+
+  .label-barcode-mock {
+    display: flex; gap: 1px; align-items: flex-end; height: 16px;
+  }
+
+  .label-barcode-mock span {
+    display: block; width: 1.5px; background: var(--ink);
+  }
+
+  .action-row {
+    display: flex; gap: 10px;
+  }
+
+  .action-btn {
+    flex: 1; padding: 14px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    border-radius: var(--radius);
+    font-size: 12px; font-family: var(--font-sans);
+    color: var(--ink); cursor: pointer;
+    text-align: center; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .action-btn:hover { border-color: var(--ink); }
+  .action-btn.primary {
+    background: var(--green); color: var(--white); border-color: var(--green);
+  }
+  .action-btn.primary:hover { opacity: 0.88; }
+
+  /* ── SUCCESS SCREEN ── */
+  .success-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 30px; text-align: center; gap: 16px;
+  }
+
+  .success-icon {
+    width: 56px; height: 56px;
+    border: 1px solid var(--green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--green); font-size: 22px;
+  }
+
+  .success-title {
+    font-size: 20px; font-weight: 300; color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .success-sub {
+    font-size: 13px; color: var(--ink-light); line-height: 1.6;
+    max-width: 260px;
+  }
+
+  .success-restart {
+    margin-top: 12px;
+    padding: 13px 32px;
+    background: var(--green); color: var(--white);
+    border: none; border-radius: var(--radius);
+    font-size: 12px; letter-spacing: 0.12em;
+    text-transform: uppercase; font-family: var(--font-sans);
+    cursor: pointer;
+  }
+
+  /* ── ADMIN SCREEN ── */
+  .admin-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--white);
+  }
+
+  .admin-tab {
+    flex: 1; padding: 14px;
+    text-align: center; font-size: 12px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-light); cursor: pointer;
+    border: none; background: none;
+    font-family: var(--font-sans);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .admin-tab.active {
+    color: var(--green); border-bottom-color: var(--green);
+  }
+
+  .admin-panel { display: none; padding: 20px; }
+  .admin-panel.active { display: block; }
+
+  .admin-section-title {
+    font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--ink-light);
+    margin-bottom: 16px;
+  }
+
+  .plant-admin-list {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .plant-admin-item {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .plant-admin-item-name { font-size: 14px; font-weight: 500; }
+  .plant-admin-item-en { font-size: 11px; color: var(--ink-light); margin-top: 2px; }
+
+  .plant-admin-actions { display: flex; gap: 8px; }
+
+  .admin-edit-btn, .admin-del-btn {
+    padding: 6px 12px; border-radius: var(--radius);
+    font-size: 11px; font-family: var(--font-sans);
+    cursor: pointer; letter-spacing: 0.04em;
+    border: 1px solid var(--border); background: var(--white);
+    transition: all 0.15s;
+  }
+
+  .admin-edit-btn:hover { border-color: var(--green); color: var(--green); }
+  .admin-del-btn:hover { border-color: #c0392b; color: #c0392b; }
+
+  .add-plant-btn {
+    width: 100%; padding: 14px;
+    border: 1.5px dashed var(--green-mid);
+    background: var(--green-light);
+    border-radius: var(--radius);
+    font-size: 12px; color: var(--green);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-family: var(--font-sans); cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .add-plant-btn:hover { border-color: var(--green); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 200;
+    align-items: flex-end; justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--white);
+    border-radius: 4px 4px 0 0;
+    width: 100%; max-width: 600px;
+    max-height: 90vh; overflow-y: auto;
+    padding: 24px 20px 40px;
+  }
+
+  .modal-title {
+    font-size: 16px; font-weight: 500; margin-bottom: 20px;
+    color: var(--ink);
+  }
+
+  .form-group { margin-bottom: 14px; }
+
+  .form-label {
+    display: block; font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-light); margin-bottom: 6px;
+  }
+
+  .form-input, .form-textarea {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px; font-family: var(--font-sans);
+    color: var(--ink); background: var(--white);
+    outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .form-input:focus, .form-textarea:focus { border-color: var(--green); }
+
+  .form-textarea { resize: vertical; min-height: 70px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+  .modal-save-btn {
+    flex: 1; padding: 13px;
+    background: var(--green); color: var(--white);
+    border: none; border-radius: var(--radius);
+    font-size: 13px; font-family: var(--font-sans);
+    letter-spacing: 0.08em; cursor: pointer;
+  }
+
+  .modal-cancel-btn {
+    padding: 13px 20px;
+    background: none; border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px; font-family: var(--font-sans);
+    color: var(--ink); cursor: pointer;
+  }
+
+  /* ── PRINTER STATUS ── */
+  .printer-status-bar {
+    margin: 0 20px 16px;
+    padding: 10px 14px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ink-faint); flex-shrink: 0;
+  }
+
+  .status-dot.connected { background: #4CAF50; }
+  .status-dot.error { background: #E53935; }
+
+  .status-text { font-size: 12px; color: var(--ink-light); }
+
+  .printer-ip-input {
+    margin-left: auto;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 12px; font-family: var(--font-sans);
+    width: 130px; outline: none;
+    -webkit-appearance: none;
+  }
+
+  .connect-btn {
+    padding: 6px 12px;
+    background: var(--green); color: var(--white);
+    border: none; border-radius: var(--radius);
+    font-size: 11px; font-family: var(--font-sans);
+    cursor: pointer; letter-spacing: 0.06em;
+  }
+
+  /* ── QR SECTION ── */
+  .qr-section {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; text-align: center;
+  }
+
+  .qr-mock {
+    width: 120px; height: 120px;
+    margin: 0 auto 16px;
+    background: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--white); font-size: 9px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    position: relative; overflow: hidden;
+  }
+
+  .qr-mock::before {
+    content: '';
+    position: absolute; inset: 12px;
+    border: 2px solid var(--white);
+  }
+
+  .qr-url {
+    font-size: 11px; color: var(--ink-light);
+    margin-bottom: 12px; word-break: break-all;
+  }
+
+  .qr-download-btn {
+    padding: 10px 24px;
+    border: 1px solid var(--green);
+    color: var(--green); background: none;
+    border-radius: var(--radius);
+    font-size: 12px; font-family: var(--font-sans);
+    cursor: pointer; letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .section-divider {
+    height: 1px; background: var(--border);
+    margin: 24px 0;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ════════ CUSTOMER SCREEN ════════ -->
+<div id="screenCustomer" class="screen active">
+  <nav class="nav">
+    <span class="nav-logo">녹취록</span>
+    <button class="nav-btn" onclick="goAdmin()">관리자</button>
+  </nav>
+
+  <div class="screen-content">
+    <div class="customer-hero">
+      <div class="hero-label">Nokchilog Plant Archive</div>
+      <div class="hero-title">어떤 식물을<br>데려가시나요?</div>
+      <div class="hero-sub">식물을 검색하고 나만의 라벨을 만들어보세요</div>
+    </div>
+
+    <div class="search-area">
+      <div class="search-wrap">
+        <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input
+          type="text" id="searchInput"
+          class="search-input"
+          placeholder="식물 이름으로 검색..."
+          oninput="filterPlants(this.value)"
+        >
+      </div>
+    </div>
+
+    <div class="plant-list" id="plantList"></div>
+  </div>
+</div>
+
+<!-- ════════ DRAWING SCREEN ════════ -->
+<div id="screenDrawing" class="screen">
+  <nav class="nav">
+    <span class="nav-logo">녹취록</span>
+    <button class="nav-btn" onclick="showScreen('screenCustomer')">← 뒤로</button>
+  </nav>
+
+  <div class="screen-content" style="display:flex;flex-direction:column;">
+    <div class="drawing-header">
+      <div class="plant-selected-label">선택한 식물</div>
+      <div class="plant-selected-name" id="selectedPlantName">—</div>
+      <div class="plant-selected-en" id="selectedPlantEn">—</div>
+    </div>
+
+    <div class="drawing-prompt">
+      <p>이 식물과의 첫 순간을 그려보세요.<br>라벨에 담겨 함께 집으로 갑니다.</p>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="drawCanvas"></canvas>
+
+      <div class="canvas-tools">
+        <button class="tool-btn active" id="btnDraw" onclick="setTool('draw')">그리기</button>
+        <button class="tool-btn" id="btnErase" onclick="setTool('erase')">지우기</button>
+        <button class="tool-btn" onclick="clearCanvas()">초기화</button>
+
+        <div class="color-picker-wrap">
+          <div class="color-dot active" onclick="setColor(0)"></div>
+          <div class="color-dot" onclick="setColor(1)"></div>
+          <div class="color-dot" onclick="setColor(2)"></div>
+          <div class="color-dot" onclick="setColor(3)"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:var(--ink-light);letter-spacing:0.06em;">굵기</span>
+        <input type="range" class="size-slider" id="brushSize" min="1" max="20" value="3">
+      </div>
+    </div>
+
+    <button class="print-btn" onclick="goPreview()">라벨 미리보기 →</button>
+  </div>
+</div>
+
+<!-- ════════ PREVIEW SCREEN ════════ -->
+<div id="screenPreview" class="screen">
+  <nav class="nav">
+    <span class="nav-logo">녹취록</span>
+    <button class="nav-btn" onclick="showScreen('screenDrawing')">← 수정</button>
+  </nav>
+
+  <div class="screen-content">
+    <div class="label-preview-wrap">
+      <div class="preview-title">라벨 미리보기</div>
+
+      <!-- THE LABEL -->
+      <div id="labelPreview">
+        <div class="label-inner">
+          <div class="label-shop-name">Nokchilog — 녹취록 / Mangwon-dong, Seoul</div>
+
+          <div class="label-main-row">
+            <div class="label-symbol">Ng</div>
+            <div class="label-name-block">
+              <div class="label-name-ko" id="labelNameKo">—</div>
+              <div class="label-name-en" id="labelNameEn">—</div>
+            </div>
+          </div>
+
+          <div class="label-drawing-area">
+            <img id="labelDrawingImg" src="" alt="drawing">
+          </div>
+
+          <div class="label-info-grid">
+            <div class="label-info-item">
+              <div class="label-info-key">물 주기</div>
+              <div class="label-info-val" id="labelWater">—</div>
+            </div>
+            <div class="label-info-item">
+              <div class="label-info-key">햇빛</div>
+              <div class="label-info-val" id="labelSun">—</div>
+            </div>
+            <div class="label-info-item">
+              <div class="label-info-key">최적 온도</div>
+              <div class="label-info-val" id="labelTemp">—</div>
+            </div>
+            <div class="label-info-item">
+              <div class="label-info-key">통풍</div>
+              <div class="label-info-val" id="labelAir">—</div>
+            </div>
+          </div>
+
+          <div class="label-copy" id="labelCopy">—</div>
+
+          <div class="label-footer">
+            <div class="label-date" id="labelDate">—</div>
+            <div class="label-barcode-mock" id="barcodeEl"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="action-btn" onclick="showScreen('screenDrawing')">다시 그리기</button>
+        <button class="action-btn primary" onclick="printLabel()">인쇄하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ SUCCESS SCREEN ════════ -->
+<div id="screenSuccess" class="screen">
+  <nav class="nav">
+    <span class="nav-logo">녹취록</span>
+  </nav>
+
+  <div class="screen-content" style="display:flex;flex-direction:column;">
+    <div class="success-wrap">
+      <div class="success-icon">✓</div>
+      <div class="success-title">라벨이 출력됩니다</div>
+      <div class="success-sub">잠시 후 카운터에서 라벨을 받아<br>화분에 감아 가져가세요 🌿</div>
+      <button class="success-restart" onclick="restart()">처음으로</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ADMIN SCREEN ════════ -->
+<div id="screenAdmin" class="screen">
+  <nav class="nav">
+    <span class="nav-logo">녹취록 — 관리자</span>
+    <button class="nav-btn" onclick="showScreen('screenCustomer')">← 나가기</button>
+  </nav>
+
+  <div class="screen-content">
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchAdminTab('plants', this)">식물 관리</button>
+      <button class="admin-tab" onclick="switchAdminTab('printer', this)">프린터</button>
+      <button class="admin-tab" onclick="switchAdminTab('qr', this)">QR 코드</button>
+    </div>
+
+    <!-- PLANTS TAB -->
+    <div class="admin-panel active" id="adminPlants">
+      <div class="admin-section-title">등록된 식물</div>
+      <div class="plant-admin-list" id="adminPlantList"></div>
+      <button class="add-plant-btn" onclick="openModal()">+ 새 식물 추가</button>
+    </div>
+
+    <!-- PRINTER TAB -->
+    <div class="admin-panel" id="adminPrinter">
+      <div class="admin-section-title">프린터 연결</div>
+
+      <div class="printer-status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-text" id="statusText">연결 안됨</span>
+        <input type="text" class="printer-ip-input" id="printerIp" placeholder="192.168.1.xxx" value="">
+        <button class="connect-btn" onclick="testPrinterConnection()">연결</button>
+      </div>
+
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-size:12px;line-height:1.8;color:var(--ink-light);">
+        <strong style="color:var(--ink);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;display:block;margin-bottom:10px;">Brother QL-820NWB 연결 방법</strong>
+        1. 프린터를 같은 Wi-Fi에 연결하세요<br>
+        2. 프린터 IP 주소를 확인하세요 (프린터 설정 → 네트워크 정보)<br>
+        3. 위에 IP를 입력하고 연결 버튼을 누르세요<br>
+        4. 연결 성공 시 테스트 라벨이 출력됩니다<br><br>
+        <span style="color:var(--accent);">※ 실제 인쇄는 Brother b-PAC SDK 또는 로컬 서버 설치가 필요합니다</span>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="admin-section-title">테스트 인쇄</div>
+      <button class="add-plant-btn" onclick="testPrint()" style="border-style:solid;background:var(--white);">
+        테스트 라벨 출력
+      </button>
+    </div>
+
+    <!-- QR TAB -->
+    <div class="admin-panel" id="adminQr">
+      <div class="admin-section-title">QR 코드</div>
+
+      <div class="qr-section">
+        <div class="qr-mock">QR</div>
+        <div class="qr-url" id="qrUrl">이 페이지 URL을 QR로 만들어 사용하세요</div>
+        <button class="qr-download-btn" onclick="copyUrl()">URL 복사</button>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div style="font-size:12px;color:var(--ink-light);line-height:1.8;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+        <strong style="color:var(--ink);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;display:block;margin-bottom:10px;">QR 설치 방법</strong>
+        1. URL을 복사하세요<br>
+        2. qr.io, canva 등에서 QR 이미지 생성<br>
+        3. 카운터 혹은 모종 트레이 옆에 부착<br>
+        4. 손님이 스캔 → 바로 이 페이지로 연결됩니다
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL ════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">새 식물 추가</div>
+
+    <input type="hidden" id="editingId">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">식물 이름 (한글)</label>
+        <input type="text" class="form-input" id="fNameKo" placeholder="몬스테라">
+      </div>
+      <div class="form-group">
+        <label class="form-label">식물 이름 (영문)</label>
+        <input type="text" class="form-input" id="fNameEn" placeholder="Monstera deliciosa">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">물 주기</label>
+        <input type="text" class="form-input" id="fWater" placeholder="주 1회">
+      </div>
+      <div class="form-group">
+        <label class="form-label">햇빛</label>
+        <input type="text" class="form-input" id="fSun" placeholder="반음지">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">최적 온도</label>
+        <input type="text" class="form-input" id="fTemp" placeholder="18–28°C">
+      </div>
+      <div class="form-group">
+        <label class="form-label">통풍</label>
+        <input type="text" class="form-input" id="fAir" placeholder="보통">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">한 줄 감성 카피</label>
+      <input type="text" class="form-input" id="fCopy" placeholder="빛을 기억하는 잎, 그늘에서도 단단하게.">
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" onclick="closeModal()">취소</button>
+      <button class="modal-save-btn" onclick="savePlant()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+let plants = JSON.parse(localStorage.getItem('nokchilog_plants') || 'null') || [
+  {
+    id: 1, nameKo: '몬스테라', nameEn: 'Monstera deliciosa',
+    water: '주 1회', sun: '반음지', temp: '18–28°C',
+    air: '보통 (주 2–3회 환기)', copy: '빛을 기억하는 잎, 그늘에서도 단단하게.'
+  },
+  {
+    id: 2, nameKo: '산세베리아', nameEn: 'Sansevieria trifasciata',
+    water: '월 1–2회', sun: '음지~양지', temp: '15–30°C',
+    air: '강함에 잘 견딤', copy: '잊혀도 살아남는 것들에 대하여.'
+  },
+  {
+    id: 3, nameKo: '스킨답서스', nameEn: 'Epipremnum aureum',
+    water: '주 1–2회', sun: '반음지', temp: '15–25°C',
+    air: '보통', copy: '어디서든 뿌리를 내리는 힘.'
+  },
+  {
+    id: 4, nameKo: '선인장', nameEn: 'Cactus spp.',
+    water: '월 1회', sun: '직사광선', temp: '20–35°C',
+    air: '통풍 필수', copy: '침묵으로 꽉 찬 식물.'
+  },
+];
+
+let selectedPlant = null;
+let currentTool = 'draw';
+let currentColor = '#1A1A18';
+const colors = ['#1A1A18', '#3D5A3E', '#8B6F47', '#C4C2BC'];
+let isDrawing = false;
+let lastX = 0, lastY = 0;
+let printerIp = '';
+
+function savePlants() {
+  localStorage.setItem('nokchilog_plants', JSON.stringify(plants));
+}
+
+// ── SCREENS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goAdmin() {
+  renderAdminList();
+  showScreen('screenAdmin');
+}
+
+// ── PLANT LIST ──
+function renderPlantList(list) {
+  const el = document.getElementById('plantList');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">검색 결과가 없습니다.<br>다른 이름으로 찾아보세요.</div>';
+    return;
+  }
+  el.innerHTML = list.map(p => `
+    <div class="plant-card" onclick="selectPlant(${p.id})">
+      <div class="plant-card-info">
+        <div class="plant-card-name-ko">${p.nameKo}</div>
+        <div class="plant-card-name-en">${p.nameEn}</div>
+      </div>
+      <div class="plant-card-arrow">›</div>
+    </div>
+  `).join('');
+}
+
+function filterPlants(q) {
+  const filtered = plants.filter(p =>
+    p.nameKo.includes(q) || p.nameEn.toLowerCase().includes(q.toLowerCase())
+  );
+  renderPlantList(filtered);
+}
+
+function selectPlant(id) {
+  selectedPlant = plants.find(p => p.id === id);
+  document.getElementById('selectedPlantName').textContent = selectedPlant.nameKo;
+  document.getElementById('selectedPlantEn').textContent = selectedPlant.nameEn;
+  clearCanvas();
+  showScreen('screenDrawing');
+  setTimeout(initCanvas, 100);
+}
+
+// ── CANVAS ──
+function initCanvas() {
+  const canvas = document.getElementById('drawCanvas');
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.fillStyle = '#FDFCFA';
+  ctx.fillRect(0, 0, rect.width, rect.height);
+}
+
+function getCtx() { return document.getElementById('drawCanvas').getContext('2d'); }
+
+function getPos(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  return {
+    x: touch.clientX - rect.left,
+    y: touch.clientY - rect.top
+  };
+}
+
+function startDraw(e) {
+  e.preventDefault();
+  isDrawing = true;
+  const canvas = document.getElementById('drawCanvas');
+  const pos = getPos(e, canvas);
+  lastX = pos.x; lastY = pos.y;
+}
+
+function draw(e) {
+  e.preventDefault();
+  if (!isDrawing) return;
+  const canvas = document.getElementById('drawCanvas');
+  const ctx = getCtx();
+  const pos = getPos(e, canvas);
+  const size = parseInt(document.getElementById('brushSize').value);
+
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.strokeStyle = currentTool === 'erase' ? '#FDFCFA' : currentColor;
+  ctx.lineWidth = currentTool === 'erase' ? size * 3 : size;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  lastX = pos.x; lastY = pos.y;
+}
+
+function stopDraw(e) { isDrawing = false; }
+
+function clearCanvas() {
+  const canvas = document.getElementById('drawCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FDFCFA';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function setTool(t) {
+  currentTool = t;
+  document.getElementById('btnDraw').classList.toggle('active', t === 'draw');
+  document.getElementById('btnErase').classList.toggle('active', t === 'erase');
+}
+
+function setColor(i) {
+  currentColor = colors[i];
+  document.querySelectorAll('.color-dot').forEach((d, idx) => {
+    d.classList.toggle('active', idx === i);
+  });
+  setTool('draw');
+}
+
+// Attach events
+const canvas = document.getElementById('drawCanvas');
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDraw);
+canvas.addEventListener('mouseleave', stopDraw);
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', stopDraw);
+
+// ── PREVIEW ──
+function goPreview() {
+  if (!selectedPlant) return;
+
+  // populate label
+  document.getElementById('labelNameKo').textContent = selectedPlant.nameKo;
+  document.getElementById('labelNameEn').textContent = selectedPlant.nameEn;
+  document.getElementById('labelWater').textContent = selectedPlant.water;
+  document.getElementById('labelSun').textContent = selectedPlant.sun;
+  document.getElementById('labelTemp').textContent = selectedPlant.temp;
+  document.getElementById('labelAir').textContent = selectedPlant.air;
+  document.getElementById('labelCopy').textContent = selectedPlant.copy;
+
+  const now = new Date();
+  document.getElementById('labelDate').textContent =
+    `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+
+  // drawing
+  const drawingCanvas = document.getElementById('drawCanvas');
+  document.getElementById('labelDrawingImg').src = drawingCanvas.toDataURL('image/png');
+
+  // mock barcode
+  const bar = document.getElementById('barcodeEl');
+  const heights = [14,9,14,6,12,9,14,7,12,14,9,6,14,9,12];
+  bar.innerHTML = heights.map(h =>
+    `<span style="height:${h}px;background:var(--ink);display:block;width:1.5px;"></span>`
+  ).join('');
+
+  showScreen('screenPreview');
+}
+
+// ── PRINT ──
+function printLabel() {
+  const ip = document.getElementById('printerIp')?.value || printerIp;
+
+  // Use window.print() as fallback (browser print dialog targeting label)
+  const labelEl = document.getElementById('labelPreview');
+
+  // Create a print-specific window
+  const printWin = window.open('', '_blank', 'width=300,height=600');
+  printWin.document.write(`
+    <!DOCTYPE html><html><head>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { font-family: 'Helvetica Neue', sans-serif; width: 62mm; }
+      @media print {
+        @page { size: 62mm auto; margin: 0; }
+        body { -webkit-print-color-adjust: exact; }
+      }
+    </style>
+    </head><body>
+    ${labelEl.innerHTML}
+    </body></html>
+  `);
+  printWin.document.close();
+  printWin.onload = () => {
+    printWin.print();
+    printWin.close();
+  };
+
+  showScreen('screenSuccess');
+}
+
+function restart() {
+  selectedPlant = null;
+  document.getElementById('searchInput').value = '';
+  renderPlantList(plants);
+  showScreen('screenCustomer');
+}
+
+// ── ADMIN ──
+function switchAdminTab(tab, btn) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+
+  if (tab === 'qr') {
+    document.getElementById('qrUrl').textContent = window.location.href;
+  }
+}
+
+function renderAdminList() {
+  const el = document.getElementById('adminPlantList');
+  el.innerHTML = plants.map(p => `
+    <div class="plant-admin-item">
+      <div>
+        <div class="plant-admin-item-name">${p.nameKo}</div>
+        <div class="plant-admin-item-en">${p.nameEn}</div>
+      </div>
+      <div class="plant-admin-actions">
+        <button class="admin-edit-btn" onclick="openModal(${p.id})">수정</button>
+        <button class="admin-del-btn" onclick="deletePlant(${p.id})">삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── MODAL ──
+function openModal(id) {
+  document.getElementById('editingId').value = id || '';
+  if (id) {
+    const p = plants.find(pl => pl.id === id);
+    document.getElementById('modalTitle').textContent = '식물 수정';
+    document.getElementById('fNameKo').value = p.nameKo;
+    document.getElementById('fNameEn').value = p.nameEn;
+    document.getElementById('fWater').value = p.water;
+    document.getElementById('fSun').value = p.sun;
+    document.getElementById('fTemp').value = p.temp;
+    document.getElementById('fAir').value = p.air;
+    document.getElementById('fCopy').value = p.copy;
+  } else {
+    document.getElementById('modalTitle').textContent = '새 식물 추가';
+    ['fNameKo','fNameEn','fWater','fSun','fTemp','fAir','fCopy'].forEach(f => {
+      document.getElementById(f).value = '';
+    });
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function savePlant() {
+  const id = document.getElementById('editingId').value;
+  const data = {
+    nameKo: document.getElementById('fNameKo').value.trim(),
+    nameEn: document.getElementById('fNameEn').value.trim(),
+    water: document.getElementById('fWater').value.trim(),
+    sun: document.getElementById('fSun').value.trim(),
+    temp: document.getElementById('fTemp').value.trim(),
+    air: document.getElementById('fAir').value.trim(),
+    copy: document.getElementById('fCopy').value.trim(),
+  };
+  if (!data.nameKo) { alert('식물 이름을 입력해주세요'); return; }
+
+  if (id) {
+    const idx = plants.findIndex(p => p.id === parseInt(id));
+    plants[idx] = { ...plants[idx], ...data };
+  } else {
+    data.id = Date.now();
+    plants.push(data);
+  }
+
+  savePlants();
+  renderAdminList();
+  renderPlantList(plants);
+  closeModal();
+}
+
+function deletePlant(id) {
+  if (!confirm('이 식물을 삭제할까요?')) return;
+  plants = plants.filter(p => p.id !== id);
+  savePlants();
+  renderAdminList();
+  renderPlantList(plants);
+}
+
+// ── PRINTER ──
+function testPrinterConnection() {
+  const ip = document.getElementById('printerIp').value.trim();
+  if (!ip) { alert('IP 주소를 입력하세요'); return; }
+  printerIp = ip;
+  document.getElementById('statusText').textContent = '연결 중...';
+
+  // Simulate connection test
+  setTimeout(() => {
+    document.getElementById('statusDot').className = 'status-dot connected';
+    document.getElementById('statusText').textContent = `연결됨 — ${ip}`;
+  }, 1200);
+}
+
+function testPrint() {
+  alert('테스트 라벨을 출력합니다.\n(실제 출력은 Brother b-PAC SDK 또는 로컬 서버 연동 후 동작합니다)');
+}
+
+function copyUrl() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    alert('URL이 복사되었습니다!');
+  });
+}
+
+// ── INIT ──
+renderPlantList(plants);
+</script>
+</body>
+</html>
