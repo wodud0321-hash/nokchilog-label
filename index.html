@@ -336,7 +336,7 @@ html, body {
 
 @media (max-width: 600px) {
   .item-img-wrap {
-    width: calc(100vw - 32px);
+    width: calc(100vw - 48px);
     max-width: none;
     min-width: 0;
   }
@@ -344,7 +344,7 @@ html, body {
     margin-bottom: 200px;
   }
   .item-caption {
-    padding: 0 16px;
+    padding: 0 24px;
   }
   :root {
     --mono-size: 12px;
@@ -368,6 +368,15 @@ html, body {
 
 .item-ascii canvas {
   width: 100%; height: 100%; display: block;
+}
+.item-ascii.ascii-loading::after {
+  content: '...';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Archivo', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.25);
 }
 
 .item-placeholder {
@@ -1112,6 +1121,8 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716257/nokchilog/sv2dqqpuj31vjgiue4ig.jpg",
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716260/nokchilog/jfxoe48bswghw7l9nj2t.jpg"
     ],
+    "common": "Dragon Tree",
+    "family": "Asparagaceae",
     "water": "2–3주에 1회",
     "sun": "밝은 간접광~반음지",
     "temp": "18–28°C",
@@ -1126,6 +1137,8 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716262/nokchilog/ps0dgqupxpwgafj2ndxx.jpg",
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716264/nokchilog/t31zf2yxdpulaiwxua6k.jpg"
     ],
+    "common": "Rhaphidophora",
+    "family": "Araceae",
     "water": "주 1–2회",
     "sun": "밝은 간접광",
     "temp": "18–28°C",
@@ -1139,6 +1152,8 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716200/nokchilog/qnkat1ngyitckvfqqsz8.jpg"
     ],
+    "common": "Asparagus Fern",
+    "family": "Asparagaceae",
     "water": "주 1–2회",
     "sun": "밝은 간접광",
     "temp": "15–25°C",
@@ -1152,6 +1167,8 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716202/nokchilog/ui6c5oc8x9u7i63vhlup.jpg"
     ],
+    "common": "Philodendron Florida Beauty Green",
+    "family": "Araceae",
     "water": "주 1회",
     "sun": "밝은 간접광",
     "temp": "18–28°C",
@@ -1165,6 +1182,8 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781714887/nokchilog/rpkgopua5wa2z1fce4mm.jpg"
     ],
+    "common": "Camellia",
+    "family": "Theaceae",
     "water": "주 1–2회 (봄~가을), 겨울 월 1회",
     "sun": "밝은 간접광",
     "temp": "5–25°C",
@@ -1215,6 +1234,8 @@ function toggleSearch() {
   document.getElementById('navSearch').classList.toggle('active', searchOpen);
   if (searchOpen) {
     setTimeout(() => document.getElementById('sInp').focus(), 250);
+  } else {
+    document.querySelector('.nav-wrap').style.bottom = '';
   }
 }
 
@@ -1222,6 +1243,18 @@ function closeSearch() {
   searchOpen = false;
   document.querySelector('.nav-wrap').classList.remove('search-open');
   document.getElementById('navSearch').classList.remove('active');
+  document.querySelector('.nav-wrap').style.bottom = '';
+}
+
+// 키보드 올라올 때 nav를 키보드 위로 올림
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const nav = document.querySelector('.nav-wrap');
+    if (searchOpen) {
+      const keyboardH = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+      nav.style.bottom = Math.max(0, keyboardH) + 'px';
+    }
+  });
 }
 
 function goAdmin() {
@@ -1240,6 +1273,70 @@ function goAdmin() {
 // ══════════════════════════════
 const NOKCHI_CHARS = 'N/og';
 
+// ── 배경제거 (캐시 포함)
+const _bgCache = new Map();
+
+function getAlphaMask(px, cols, rows) {
+  const key = cols + 'x' + rows + ':' + px[0] + px[4] + px[px.length - 4];
+  if (_bgCache.has(key)) return _bgCache.get(key);
+
+  // 밝기 배열
+  const lum = new Float32Array(cols * rows);
+  for (let idx = 0; idx < cols * rows; idx++) {
+    const i = idx * 4;
+    lum[idx] = px[i] * 0.299 + px[i+1] * 0.587 + px[i+2] * 0.114;
+  }
+
+  // 국소 분산 (3×3 이웃, 선명도 = 전경 신호)
+  const variance = new Float32Array(cols * rows);
+  for (let r = 1; r < rows - 1; r++) for (let c = 1; c < cols - 1; c++) {
+    let sum = 0, sum2 = 0;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const v = lum[(r+dr)*cols+(c+dc)];
+      sum += v; sum2 += v*v;
+    }
+    const mean = sum / 9;
+    variance[r*cols+c] = sum2/9 - mean*mean;
+  }
+
+  // 채도 (색이 있으면 전경)
+  const alpha = new Uint8Array(cols * rows);
+  for (let idx = 0; idx < cols * rows; idx++) {
+    const i = idx * 4;
+    const R = px[i], G = px[i+1], B = px[i+2];
+    const sat = (Math.max(R,G,B) - Math.min(R,G,B)) / 255;
+    // 분산 + 채도 결합
+    const score = variance[idx] * 0.04 + sat * 80;
+    alpha[idx] = score > 18 ? 255 : 0;
+  }
+
+  // 침식: 완전히 고립된 점만 제거
+  const eroded = new Uint8Array(cols * rows);
+  for (let r = 1; r < rows-1; r++) for (let c = 1; c < cols-1; c++) {
+    if (!alpha[r*cols+c]) continue;
+    let cnt = 0;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if (alpha[(r+dr)*cols+(c+dc)]) cnt++;
+    }
+    if (cnt >= 3) eroded[r*cols+c] = 255;
+  }
+
+  // 팽창: 1px만 — 엣지 디테일 보존
+  const expanded = new Uint8Array(cols * rows);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    if (eroded[r*cols+c]) { expanded[r*cols+c] = 255; continue; }
+    let found = false;
+    outer: for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const nr = r+dr, nc = c+dc;
+      if (nr>=0 && nr<rows && nc>=0 && nc<cols && eroded[nr*cols+nc]) { found=true; break outer; }
+    }
+    if (found) expanded[r*cols+c] = 255;
+  }
+
+  _bgCache.set(key, expanded);
+  return expanded;
+}
+
 function renderASCII(imgEl, canvas) {
   const W = canvas.offsetWidth; const H = canvas.offsetHeight;
   const dpr = window.devicePixelRatio || 1;
@@ -1247,36 +1344,29 @@ function renderASCII(imgEl, canvas) {
   canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
-  const FS = 5; const CW = FS * 0.72; const CH = 6.7;
+  const FS = 5; const CW = FS * 0.85; const CH = 9;
   const cols = Math.floor(W / CW); const rows = Math.floor(H / CH);
   const off = document.createElement('canvas');
   off.width = cols; off.height = rows;
   const octx = off.getContext('2d');
   octx.drawImage(imgEl, 0, 0, cols, rows);
   const px = octx.getImageData(0,0,cols,rows).data;
-  // ── 1단계: 밝기 배열 + min/max 정규화
+
+  const alphaMask = getAlphaMask(px, cols, rows);
+
   const bright = new Float32Array(cols * rows);
+  const sat    = new Float32Array(cols * rows);
   let minB = 1, maxB = 0;
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     const i = (r * cols + c) * 4;
-    const b = (px[i]*.299 + px[i+1]*.587 + px[i+2]*.114) / 255;
-    bright[r * cols + c] = b;
+    const R = px[i]/255, G = px[i+1]/255, B = px[i+2]/255;
+    const b = R*.299 + G*.587 + B*.114;
+    bright[r*cols+c] = b;
+    sat[r*cols+c] = Math.max(R,G,B) - Math.min(R,G,B);
     if (b < minB) minB = b;
     if (b > maxB) maxB = b;
   }
   const range = maxB - minB || 1;
-
-  // ── 1.5단계: 블러된 밝기 배열 (외곽선만 잡기 위해)
-  const blurred = new Float32Array(cols * rows);
-  const BR = 5;
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    let sum = 0, cnt = 0;
-    for (let dr = -BR; dr <= BR; dr++) for (let dc = -BR; dc <= BR; dc++) {
-      const nr = r+dr, nc = c+dc;
-      if (nr>=0 && nr<rows && nc>=0 && nc<cols) { sum += bright[nr*cols+nc]; cnt++; }
-    }
-    blurred[r*cols+c] = sum / cnt;
-  }
 
   ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
   ctx.fillStyle = '#fff';
@@ -1284,25 +1374,10 @@ function renderASCII(imgEl, canvas) {
   ctx.textBaseline = 'top';
 
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const norm = (bright[r * cols + c] - minB) / range;
-    const isSubject = norm < 0.85;
-    if (!isSubject) continue;
-
-    // ── 2단계: 블러된 배열에 소벨 적용 (외곽선만)
-    let edge = 0;
-    if (r > 0 && r < rows-1 && c > 0 && c < cols-1) {
-      const tl=blurred[(r-1)*cols+(c-1)], tc=blurred[(r-1)*cols+c], tr=blurred[(r-1)*cols+(c+1)];
-      const ml=blurred[r*cols+(c-1)],               mr=blurred[r*cols+(c+1)];
-      const bl=blurred[(r+1)*cols+(c-1)], bc=blurred[(r+1)*cols+c], br2=blurred[(r+1)*cols+(c+1)];
-      const gx = -tl - 2*ml - bl + tr + 2*mr + br2;
-      const gy = -tl - 2*tc - tr + bl + 2*bc + br2;
-      edge = Math.min(Math.sqrt(gx*gx + gy*gy) * 8.0, 1);
-    }
-
-    // 경계: 높은 확률 / 내부: 매우 희소
-    const interior = Math.pow(1 - norm, 6.0) * 0.006;
-    const prob = Math.max(edge * 0.65, interior);
-
+    if (alphaMask[r * cols + c] < 128) continue;
+    const norm = (bright[r*cols+c] - minB) / range;
+    const saturation = sat[r*cols+c];
+    const prob = Math.pow(1 - norm, 1.6) * (0.65 + saturation * 0.4);
     if (Math.random() < prob) {
       ctx.fillText(NOKCHI_CHARS[Math.floor(Math.random() * NOKCHI_CHARS.length)], c*CW, r*CH);
     }
@@ -1314,30 +1389,41 @@ function attachAscii(triggerEl, imgEl, asciiWrap) {
   let done = false;
   const isMobile = () => window.matchMedia('(hover: none)').matches;
 
-  const doRender = () => {
-    if (!done && imgEl.complete && imgEl.naturalWidth > 0) {
-      cv.style.width = '100%'; cv.style.height = '100%';
-      document.fonts.load("400 5px 'nokchilog_3'").then(() => {
-        renderASCII(imgEl, cv);
-        done = true;
-      });
-    }
+  let rendering = false;
+  const doRender = async () => {
+    if (done || rendering || !imgEl.complete || !imgEl.naturalWidth) return;
+    rendering = true;
+    cv.style.width = '100%'; cv.style.height = '100%';
+    await document.fonts.load("400 5px 'nokchilog_3'");
+    renderASCII(imgEl, cv);
+    done = true;
+    rendering = false;
   };
 
   const go = () => {
     // 데스크탑: hover
     triggerEl.addEventListener('mouseenter', doRender);
 
-    // 모바일: tap 토글
+    // 모바일: single-tap 토글 (pinch zoom 제외)
+    let touchStartCount = 0;
+    triggerEl.addEventListener('touchstart', (e) => {
+      touchStartCount = e.touches.length;
+    }, { passive: true });
     triggerEl.addEventListener('touchend', (e) => {
       if (!isMobile()) return;
+      if (touchStartCount > 1) return; // pinch — skip
       e.preventDefault();
       doRender();
       const isShowing = triggerEl.classList.contains('ascii-active');
       triggerEl.classList.toggle('ascii-active', !isShowing);
     }, { passive: false });
 
-    window.addEventListener('resize', () => { done = false; });
+    // 실제 레이아웃 크기 변화 시에만 리렌더 (pinch zoom DPR 변화 무시)
+    let lastW = 0;
+    window.addEventListener('resize', () => {
+      const newW = triggerEl.offsetWidth;
+      if (Math.abs(newW - lastW) > 2) { done = false; lastW = newW; }
+    });
   };
 
   if (imgEl.complete && imgEl.naturalWidth > 0) go();
