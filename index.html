@@ -1115,15 +1115,22 @@ input[type=range]::-webkit-slider-thumb {
 let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
   {
     "id": 1,
-    "nameEn": "Dracaena marginata",
-    "common": "Dragon Tree",
+    "nameEn": "Dracaena marginata Lam.",
+    "common": "Madagascar Dragon Tree",
     "nameKo": "드라세나 마지나타",
-    "habitat": "Madagascar & Mascarene Islands",
-    "water": "2–3주에 1회",
+    "habitatEn": "Madagascar, dry trop. scrubland",
+    "habitatKo": "마다가스카르 원산의 건조 열대 관목지",
+    "water": "Every 14–21 days / 2–3주에 1회",
     "temp": "18–28°C",
     "sun": "밝은 간접광~반음지",
+    "humid": "40–60%",
     "air": "보통",
     "copy": "구불한 목대에서 설픻 피어나는 초록 분수.",
+    "description": "밝은 간접광이나 반음지에 두어주세요.
+흙이 완전히 마른 후에 물을 주세요.
+물주기는 보통 2–3주에 한 번이에요.
+잎 끝이 갈색으로 변하면 건조 신호예요.
+직사광선은 잎을 태울 수 있어요.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716257/nokchilog/sv2dqqpuj31vjgiue4ig.jpg",
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716260/nokchilog/jfxoe48bswghw7l9nj2t.jpg"
@@ -1131,15 +1138,22 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
   },
   {
     "id": 2,
-    "nameEn": "Rhaphidophora decursiva",
-    "common": "Rhaphidophora",
+    "nameEn": "Rhaphidophora decursiva (Roxb.) Schott",
+    "common": "Down-curved Rhaphidophora",
     "nameKo": "라피도포라 디컬시바",
-    "habitat": "NE India to Malesia",
-    "water": "주 1–2회",
-    "temp": "18–28°C",
+    "habitatEn": "India, S. China & Indochina, humid trop. forest",
+    "habitatKo": "인도·중국 남부·인도차이나의 습윤 열대림",
+    "water": "Every 5–7 days / 5–7일에 1회",
+    "temp": "18–26°C",
     "sun": "밝은 간접광",
+    "humid": "50–70%",
     "air": "보통",
     "copy": "잎이 갈라질수록 깊어지는 것들.",
+    "description": "밝은 간접광이 드는 곳에 두어주세요.
+겉흙이 마르면 물을 충분히 주세요.
+물주기는 보통 5–7일에 한 번이에요.
+잎이 늘어지면 물이 부족하다는 신호예요.
+찬바람과 낮은 온도는 피해 주세요.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716262/nokchilog/ps0dgqupxpwgafj2ndxx.jpg",
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716264/nokchilog/t31zf2yxdpulaiwxua6k.jpg"
@@ -1147,15 +1161,22 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
   },
   {
     "id": 3,
-    "nameEn": "Asparagus setaceus",
+    "nameEn": "Asparagus setaceus (Kunth) Jessop",
     "common": "Asparagus Fern",
     "nameKo": "아스파라거스 세타세우스",
-    "habitat": "Eastern & Southern Africa",
-    "water": "주 1–2회",
+    "habitatEn": "E. South Africa, subtrop. forest margins",
+    "habitatKo": "남아프리카 동부의 아열대 삼림 가장자리",
+    "water": "Every 3–4 days / 3–4일에 1회",
     "temp": "15–25°C",
-    "sun": "밝은 간접광",
+    "sun": "밝은 간접광~반음지",
+    "humid": "50–70%",
     "air": "보통",
     "copy": "가느다란 것들의 고집.",
+    "description": "밝은 간접광이 드는 곳에 두어주세요.
+겉흙이 마르면 물을 충분히 주세요.
+물주기는 보통 3–4일에 한 번이에요.
+잎이 노랗게 변한 부분은 떼어내주세요.
+건조한 환경에선 분무를 자주 해주세요.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716200/nokchilog/qnkat1ngyitckvfqqsz8.jpg"
     ]
@@ -1163,29 +1184,43 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
   {
     "id": 4,
     "nameEn": "Philodendron 'Florida Beauty Green'",
-    "common": "Philodendron Florida Beauty Green",
+    "common": "Florida Beauty Green Philodendron",
     "nameKo": "필로덴드론 플로리다 뷰티그린",
-    "habitat": "Tropical Americas (horticultural hybrid)",
-    "water": "주 1회",
+    "habitatEn": "Trop. Americas, horticultural hybrid",
+    "habitatKo": "중남미 열대우림 원산의 원예 교배종",
+    "water": "Every 7 days / 7일에 1회",
     "temp": "18–28°C",
     "sun": "밝은 간접광",
+    "humid": "50–70%",
     "air": "보통",
     "copy": "무늬는 우연이 아니다.",
+    "description": "밝은 간접광이 드는 곳에 두어주세요.
+겉흙 2–3cm가 마르면 물을 주세요.
+물주기는 보통 7일에 한 번이에요.
+잎이 뒤로 말리면 습도 부족 신호예요.
+직사광선은 무늬를 손상시킬 수 있어요.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716202/nokchilog/ui6c5oc8x9u7i63vhlup.jpg"
     ]
   },
   {
     "id": 5,
-    "nameEn": "Camellia japonica",
-    "common": "Camellia",
+    "nameEn": "Camellia japonica L.",
+    "common": "Japanese Camellia",
     "nameKo": "동백나무",
-    "habitat": "E Asia — Korea, China, Japan",
-    "water": "주 1–2회 (봄~가을), 겨울 월 1회",
+    "habitatEn": "Korea, China & Japan, warm coastal & montane forest",
+    "habitatKo": "한국·중국·일본의 온난 해안림과 산지 삼림",
+    "water": "Every 5–7 days / 5–7일에 1회",
     "temp": "5–25°C",
-    "sun": "밝은 간접광",
+    "sun": "밝은 간접광~반음지",
+    "humid": "50–70%",
     "air": "보통",
     "copy": "가장 추운 계절에 피는 것들.",
+    "description": "밝은 간접광이 드는 서늘한 곳에 두어주세요.
+겉흙이 마르면 물을 충분히 주세요.
+물주기는 보통 5–7일에 한 번이에요.
+꽃봉오리 맺힐 때 장소 이동은 피해주세요.
+겨울엔 물주기 간격을 늘려주세요.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781714887/nokchilog/rpkgopua5wa2z1fce4mm.jpg"
     ]
