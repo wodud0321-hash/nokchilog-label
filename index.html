@@ -1115,80 +1115,80 @@ input[type=range]::-webkit-slider-thumb {
 let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
   {
     "id": 1,
-    "nameKo": "드라세나 마지나타",
     "nameEn": "Dracaena marginata",
+    "common": "Dragon Tree",
+    "nameKo": "드라세나 마지나타",
+    "habitat": "Madagascar & Mascarene Islands",
+    "water": "2–3주에 1회",
+    "temp": "18–28°C",
+    "sun": "밝은 간접광~반음지",
+    "air": "보통",
+    "copy": "구불한 목대에서 설픻 피어나는 초록 분수.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716257/nokchilog/sv2dqqpuj31vjgiue4ig.jpg",
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716260/nokchilog/jfxoe48bswghw7l9nj2t.jpg"
-    ],
-    "common": "Dragon Tree",
-    "family": "Asparagaceae",
-    "water": "2–3주에 1회",
-    "sun": "밝은 간접광~반음지",
-    "temp": "18–28°C",
-    "air": "보통",
-    "copy": "구불한 목대에서 설픻 피어나는 초록 분수."
+    ]
   },
   {
     "id": 2,
-    "nameKo": "라피도포라 디컨시바",
     "nameEn": "Rhaphidophora decursiva",
+    "common": "Rhaphidophora",
+    "nameKo": "라피도포라 디컨시바",
+    "habitat": "NE India to Malesia",
+    "water": "주 1–2회",
+    "temp": "18–28°C",
+    "sun": "밝은 간접광",
+    "air": "보통",
+    "copy": "잎이 갈라질수록 깊어지는 것들.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716262/nokchilog/ps0dgqupxpwgafj2ndxx.jpg",
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716264/nokchilog/t31zf2yxdpulaiwxua6k.jpg"
-    ],
-    "common": "Rhaphidophora",
-    "family": "Araceae",
-    "water": "주 1–2회",
-    "sun": "밝은 간접광",
-    "temp": "18–28°C",
-    "air": "보통",
-    "copy": "잎이 갈라질수록 깊어지는 것들."
+    ]
   },
   {
     "id": 3,
-    "nameKo": "아스파라거스",
     "nameEn": "Asparagus setaceus",
+    "common": "Asparagus Fern",
+    "nameKo": "아스파라거스 고사리",
+    "habitat": "Eastern & Southern Africa",
+    "water": "주 1–2회",
+    "temp": "15–25°C",
+    "sun": "밝은 간접광",
+    "air": "보통",
+    "copy": "가느다란 것들의 고집.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716200/nokchilog/qnkat1ngyitckvfqqsz8.jpg"
-    ],
-    "common": "Asparagus Fern",
-    "family": "Asparagaceae",
-    "water": "주 1–2회",
-    "sun": "밝은 간접광",
-    "temp": "15–25°C",
-    "air": "보통",
-    "copy": "가느다란 것들의 고집."
+    ]
   },
   {
     "id": 4,
-    "nameKo": "필로덴드론 플로리다 뷰티그린",
     "nameEn": "Philodendron 'Florida Beauty Green'",
+    "common": "Philodendron Florida Beauty Green",
+    "nameKo": "필로덴드론 플로리다 뷰티그린",
+    "habitat": "Tropical Americas (horticultural hybrid)",
+    "water": "주 1회",
+    "temp": "18–28°C",
+    "sun": "밝은 간접광",
+    "air": "보통",
+    "copy": "무늬는 우연이 아니다.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716202/nokchilog/ui6c5oc8x9u7i63vhlup.jpg"
-    ],
-    "common": "Philodendron Florida Beauty Green",
-    "family": "Araceae",
-    "water": "주 1회",
-    "sun": "밝은 간접광",
-    "temp": "18–28°C",
-    "air": "보통",
-    "copy": "무늬는 우연이 아니다."
+    ]
   },
   {
     "id": 5,
-    "nameKo": "동백나무",
     "nameEn": "Camellia japonica",
+    "common": "Camellia",
+    "nameKo": "동백나무",
+    "habitat": "E Asia — Korea, China, Japan",
+    "water": "주 1–2회 (봄~가을), 겨울 월 1회",
+    "temp": "5–25°C",
+    "sun": "밝은 간접광",
+    "air": "보통",
+    "copy": "가장 추운 계절에 피는 것들.",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781714887/nokchilog/rpkgopua5wa2z1fce4mm.jpg"
-    ],
-    "common": "Camellia",
-    "family": "Theaceae",
-    "water": "주 1–2회 (봄~가을), 겨울 월 1회",
-    "sun": "밝은 간접광",
-    "temp": "5–25°C",
-    "air": "보통",
-    "copy": "가장 추운 계절에 피는 것들."
+    ]
   }
 ];
 
@@ -1456,7 +1456,7 @@ function renderList(list) {
           <span class="item-caption-row"><span class="lbl">LOCAL NAME / </span>${p.local || p.nameKo}</span>
           <span class="item-caption-row"><span class="lbl">SCIENTIFIC NAME / </span>${p.scientific || p.nameEn}</span>
           <span class="item-caption-row"><span class="lbl">COMMON NAME / </span>${p.common || '—'}</span>
-          <span class="item-caption-row"><span class="lbl">FAMILY / </span>${p.family || '—'}</span>
+          <span class="item-caption-row"><span class="lbl">NATIVE HABITAT / </span>${p.habitat || '—'}</span>
         </div>
       </div>
     `;
