@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://use.typekit.net/hmo2mkp.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -14,6 +16,14 @@
   font-family: 'MonoplexKR';
   src: url('./MonoplexKR-Light.ttf') format('truetype');
   font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MonoplexKR';
+  src: url('./MonoplexKR-SemiBold.ttf') format('truetype');
+  font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
@@ -698,6 +708,14 @@ html, body {
 
 .drw-prompt { font-size:9px;letter-spacing:0.06em;color:var(--caption);line-height:1.8;max-width:200px;text-align:right; }
 
+.drw-tabs { display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.1);padding:0 24px; }
+.drw-tab {
+  font-family:var(--mono);font-size:8px;letter-spacing:0.14em;text-transform:uppercase;
+  padding:12px 16px;background:none;border:none;color:var(--caption);cursor:pointer;
+  border-bottom:1.5px solid transparent;margin-bottom:-1px;transition:all 0.1s;
+}
+.drw-tab.on { color:var(--white);border-bottom-color:var(--white); }
+
 .drw-canvas-wrap { padding:24px; }
 
 #drawCanvas {
@@ -705,6 +723,21 @@ html, body {
   background:#111;display:block;
   cursor:crosshair;touch-action:none;
 }
+
+#stampCanvas {
+  width:100%;aspect-ratio:3/1;
+  background:#111;display:block;
+}
+
+.stamp-imgs { display:flex;gap:8px;margin-top:14px;flex-wrap:wrap; }
+.stamp-thumb {
+  width:56px;height:56px;object-fit:cover;cursor:pointer;
+  border:1.5px solid transparent;transition:border-color 0.1s;opacity:0.6;
+}
+.stamp-thumb.on { border-color:var(--white);opacity:1; }
+
+.stamp-controls { margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
+.stamp-lbl { font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#555; }
 
 .drw-controls { margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
 
@@ -751,33 +784,171 @@ input[type=range]::-webkit-slider-thumb {
 /* ══════════════════════════════════
    LABEL PREVIEW
 ══════════════════════════════════ */
-.lp-wrap { padding:24px; }
+.lp-wrap { padding:24px; overflow-x:auto; }
 
 .lp-eyebrow {
   font-size:8px;letter-spacing:0.2em;text-transform:uppercase;
   color:var(--caption);margin-bottom:18px;
 }
 
+/* 라벨 전체 컨테이너 — 252×58mm → 715×165px */
 #labelPreview {
-  background:#F0EDE6;color:#111;
-  padding:18px;margin-bottom:20px;
+  background:#fff;color:#111;
+  display:flex;flex-direction:row;
+  width:715px;height:165px;
+  border:0.5px solid #bbb;
+  font-family:'Courier New',monospace;
+  position:relative;
+  overflow:hidden;
+  margin-bottom:20px;
+  flex-shrink:0;
 }
 
-.lb-shop { font-family:var(--mono);font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:#999;margin-bottom:12px; }
-.lb-row { display:flex;gap:12px;align-items:flex-start;margin-bottom:10px; }
-.lb-sym { font-family:var(--mono);font-size:32px;font-weight:700;color:#111;line-height:1;letter-spacing:-0.04em;flex-shrink:0; }
-.lb-ko { font-family:var(--mono);font-size:14px;font-weight:600;color:#111;margin-bottom:2px; }
-.lb-en { font-family:var(--mono);font-size:7px;letter-spacing:0.1em;text-transform:uppercase;color:#999; }
-.lb-drw { width:100%;border-top:0.5px solid #ddd;border-bottom:0.5px solid #ddd;margin:8px 0; }
-.lb-drw img { width:100%;height:52px;object-fit:contain;display:block; }
-.lb-grid { display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;margin-bottom:8px; }
-.lb-key { font-family:var(--mono);font-size:7px;letter-spacing:0.14em;text-transform:uppercase;color:#aaa;margin-bottom:1px; }
-.lb-val { font-family:var(--mono);font-size:9px;color:#111;font-weight:500; }
-.lb-copy { font-family:var(--mono);font-size:8px;color:#999;border-top:0.5px solid #ddd;padding-top:7px;font-style:italic;line-height:1.5; }
-.lb-foot { display:flex;justify-content:space-between;align-items:center;margin-top:7px; }
-.lb-date { font-family:var(--mono);font-size:7px;color:#bbb;letter-spacing:0.08em; }
-.lb-bar { display:flex;gap:1px;align-items:flex-end;height:13px; }
-.lb-bar span { display:block;width:1.5px;background:#111; }
+/* 왼쪽 접힘 — 43px (2.95+12.06mm) */
+.lb-fold-l {
+  width:43px;flex-shrink:0;
+  position:relative;
+  border-right:0.5px solid #ccc;
+  background:#f4f4f4;
+}
+.lb-fold-l::before {
+  content:'';position:absolute;
+  top:0;left:0;right:0;bottom:0;pointer-events:none;
+  background:
+    linear-gradient(to bottom-right, transparent calc(50% - 0.3px), #aaa calc(50% - 0.3px), #aaa calc(50% + 0.3px), transparent calc(50% + 0.3px)),
+    linear-gradient(to top-right,    transparent calc(50% - 0.3px), #aaa calc(50% - 0.3px), #aaa calc(50% + 0.3px), transparent calc(50% + 0.3px));
+}
+/* 녹취록 로고 — 폴드 하단, 회전 */
+.lb-vertical-svg {
+  position:absolute;
+  bottom:10px;
+  left:50%;
+  width:48px;
+  height:auto;
+  fill:#111;
+  transform:translateX(-50%) rotate(-90deg);
+  transform-origin:center center;
+  z-index:1;
+}
+
+/* 정보 패널 — 300px (~105mm) */
+.lb-info {
+  flex:0 0 300px;
+  padding:12px 14px 12px 14px;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+}
+.lb-info-block { display:flex;flex-direction:column;gap:1.5px; }
+.lb-info-row { display:flex;gap:0; }
+.lb-info-key {
+  color:#111;font-weight:700;
+  white-space:nowrap;width:100px;flex-shrink:0;
+  font-size:6.5px;
+  font-family:'arial-nova','Arial Nova',Arial,sans-serif;
+  line-height:1.2;
+  letter-spacing:-0.005em;
+}
+.lb-info-val {
+  color:#111;font-size:6.5px;
+  font-family:'MonoplexKR','arial-nova','Arial Nova',monospace;
+  font-weight:600;
+  line-height:1.2;
+  letter-spacing:-0.05em;
+  display:inline-block;
+  transform:scaleX(0.95);
+  transform-origin:left center;
+}
+.lb-info-divider { height:0.5px;background:#ccc;margin:6px 0; }
+
+/* 이미지 섹션 — 172px (9.56+39.02+12.06mm) */
+.lb-img-area {
+  flex:0 0 172px;
+  display:flex;flex-direction:column;
+  border-left:0.5px solid #ccc;
+  padding:10px 27px 8px 27px;
+  gap:6px;
+}
+.lb-img-inner {
+  flex:1;position:relative;
+}
+.lb-img-area img {
+  width:100%;height:100%;object-fit:contain;position:absolute;inset:0;
+}
+.lb-img-placeholder {
+  position:absolute;inset:0;
+  border:0.5px solid #bbb;
+  overflow:hidden;
+}
+.lb-img-placeholder::before,.lb-img-placeholder::after {
+  content:'';position:absolute;
+  background:#bbb;width:0.5px;
+  top:0;bottom:0;left:50%;
+  transform-origin:center center;
+}
+.lb-img-placeholder::before { transform:rotate(35deg) scaleY(1.8); }
+.lb-img-placeholder::after  { transform:rotate(-35deg) scaleY(1.8); }
+#lQR {
+  flex-shrink:0;
+  width:28px;height:28px;
+  align-self:flex-start;
+}
+#lQR canvas, #lQR img {
+  width:28px !important;height:28px !important;display:block;
+}
+
+/* 브랜딩 N/og SVG — 94px (~33mm) */
+.lb-brand {
+  flex:0 0 94px;
+  display:flex;align-items:center;justify-content:center;
+  border-left:0.5px solid #ccc;
+}
+.lb-brand-svg {
+  height:80px;
+  width:auto;
+  fill:#111;
+}
+
+/* 케어노트 — 82px (~29mm) */
+.lb-right {
+  flex:0 0 82px;
+  display:flex;flex-direction:column;
+  justify-content:flex-end;
+  padding:10px 10px 10px 10px;
+  border-left:0.5px solid #ccc;
+}
+.lb-care-notes {
+  font-size:6px;line-height:1.7;color:#111;
+  font-family:'MonoplexKR','arial-nova','Arial Nova',monospace;
+  font-weight:600;
+  letter-spacing:-0.04em;
+}
+.lb-date {
+  font-size:5.5px;color:#aaa;
+  font-family:'arial-nova','Arial Nova',Arial,sans-serif;
+  margin-top:5px;
+  letter-spacing:-0.005em;
+}
+
+/* 오른쪽 접힘 — 30px (7.54+2.95mm) */
+.lb-fold-r {
+  flex:1;
+  border-left:0.5px solid #ccc;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  background:#f4f4f4;
+}
+.lb-fold-r::before {
+  content:'';position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  background:
+    linear-gradient(to bottom-left, transparent calc(50% - 0.3px), #aaa calc(50% - 0.3px), #aaa calc(50% + 0.3px), transparent calc(50% + 0.3px)),
+    linear-gradient(to top-left,    transparent calc(50% - 0.3px), #aaa calc(50% - 0.3px), #aaa calc(50% + 0.3px), transparent calc(50% + 0.3px));
+}
+.lb-stamp-svg {
+  width:26px;height:auto;
+  fill:#111;
+  position:relative;z-index:1;
+}
 
 .act-row { display:flex;gap:10px; }
 .act {
@@ -988,24 +1159,41 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 
-  <div class="drw-canvas-wrap">
-    <canvas id="drawCanvas"></canvas>
+  <div class="drw-tabs">
+    <button class="drw-tab on" id="tabStamp" onclick="setDrwMode('stamp')">스탬프</button>
+    <button class="drw-tab" id="tabDraw" onclick="setDrwMode('draw')">직접 그리기</button>
+  </div>
 
-    <div class="drw-controls">
-      <button class="dc on" id="btnDrw" onclick="setTool('draw')">그리기</button>
-      <button class="dc" id="btnErs" onclick="setTool('erase')">지우기</button>
-      <button class="dc" onclick="clearCanvas()">초기화</button>
-      <div class="cdots">
-        <div class="cdot on" style="background:#FFFFFF" onclick="setColor(0)"></div>
-        <div class="cdot" style="background:#3D5A3E" onclick="setColor(1)"></div>
-        <div class="cdot" style="background:#8B6F47" onclick="setColor(2)"></div>
-        <div class="cdot" style="background:#555" onclick="setColor(3)"></div>
+  <div class="drw-canvas-wrap">
+    <!-- STAMP MODE -->
+    <div id="stampWrap">
+      <canvas id="stampCanvas"></canvas>
+      <div class="stamp-imgs" id="stampThumbs"></div>
+      <div class="stamp-controls">
+        <span class="stamp-lbl">threshold</span>
+        <input type="range" id="threshSlider" min="60" max="200" value="128" oninput="applyStamp()">
+        <button class="dc" onclick="invertStamp()">반전</button>
       </div>
     </div>
 
-    <div class="br-row">
-      <span class="br-lbl">굵기</span>
-      <input type="range" id="bSz" min="1" max="20" value="3">
+    <!-- DRAW MODE -->
+    <div id="drawWrap" style="display:none">
+      <canvas id="drawCanvas"></canvas>
+      <div class="drw-controls">
+        <button class="dc on" id="btnDrw" onclick="setTool('draw')">그리기</button>
+        <button class="dc" id="btnErs" onclick="setTool('erase')">지우기</button>
+        <button class="dc" onclick="clearCanvas()">초기화</button>
+        <div class="cdots">
+          <div class="cdot on" style="background:#000000" onclick="setColor(0)"></div>
+          <div class="cdot" style="background:#333333" onclick="setColor(1)"></div>
+          <div class="cdot" style="background:#666666" onclick="setColor(2)"></div>
+          <div class="cdot" style="background:#999999" onclick="setColor(3)"></div>
+        </div>
+      </div>
+      <div class="br-row">
+        <span class="br-lbl">굵기</span>
+        <input type="range" id="bSz" min="1" max="20" value="3">
+      </div>
     </div>
   </div>
 
@@ -1023,25 +1211,58 @@ input[type=range]::-webkit-slider-thumb {
     <div class="lp-eyebrow">출력될 라벨</div>
 
     <div id="labelPreview">
-      <div class="lb-shop">Nokchilog — 녹취록 / Mangwon-dong, Seoul</div>
-      <div class="lb-row">
-        <div class="lb-sym">Ng</div>
-        <div>
-          <div class="lb-ko" id="lKo">—</div>
-          <div class="lb-en" id="lEn">—</div>
+      <!-- 왼쪽 접힘 + 녹취록 로고 하단 -->
+      <div class="lb-fold-l">
+        <svg class="lb-vertical-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3.45 1.19">
+          <path d="M.96.55s-.01,0-.02,0c0,0-.01,0-.01,0h0s-.07,0-.09,0h-.28s0-.04,0-.05v-.03s0-.03,0-.05h.15s.06,0,.09,0c0,0,0,0,.01,0,0,0,.02,0,.03,0,0,0,.02,0,.02-.02v-.08s-.01-.02-.02-.02c0,0-.02,0-.03,0,0,0,0,0-.01,0-.03,0-.07,0-.09,0h-.44s0-.16,0-.16c0-.02,0-.06,0-.09,0,0,0,0,0-.01,0,0,0-.02,0-.03,0-.01,0-.02-.02-.02h-.09s-.02.01-.02.02c0,0,0,.02,0,.03,0,0,0,0,0,.01,0,.03,0,.07,0,.09v.11s0,.06,0,.09c0,0,0,0,0,.01,0,0,0,.02,0,.03,0,.01,0,.02.02.02h.28s0,.04,0,.05v.03s0,.03,0,.05H.15s-.06,0-.09,0c0,0,0,0-.01,0,0,0-.02,0-.02,0,0,0-.02,0-.02.02v.08s.01.02.02.02c0,0,.02,0,.03,0,0,0,0,0,.01,0,.03,0,.07,0,.09,0h.68s.06,0,.09,0c0,0,0,0,.01,0,0,0,.02,0,.03,0,0,0,.02,0,.02-.02v-.08s-.01-.02-.02-.02Z"/><path d="M.85,1.13s0-.07,0-.09v-.25s-.01-.02-.02-.02c0,0-.01,0-.02,0,0,0-.01,0-.01,0-.03,0-.07,0-.09,0h-.41s-.06,0-.09,0c0,0,0,0-.01,0,0,0-.02,0-.02,0,0,0-.02,0-.02.02v.08s.01.02.02.02c0,0,.02,0,.03,0,0,0,0,0,.01,0,.03,0,.07,0,.09,0h.45s0,.16,0,.16c0,.02,0,.06,0,.09,0,0,0,0,0,.01,0,0,0,.02,0,.02,0,.01,0,.02.02.02h.09s.02-.01.02-.02c0,0,0-.02,0-.03,0,0,0,0,0-.01Z"/><path d="M1.37.61h0c.1-.06.17-.1.21-.15,0,0,.02,0,.03,0l.23.14.07-.07s0-.01,0-.02c0,0,0-.01-.01-.01,0,0-.02,0-.03-.01h0s-.05-.02-.08-.04l-.1-.06s-.04-.01-.06,0c.01-.03.02-.06.03-.09h.08s.06,0,.09,0c0,0,0,0,.01,0,0,0,.02,0,.03,0,0,0,.02,0,.02-.02v-.08s0,0,0,0c0-.02-.01-.02-.02-.02,0,0-.01,0-.02,0,0,0,0,0-.01,0-.03,0-.07,0-.09,0h-.27s-.06,0-.09,0c0,0,0,0-.01,0,0,0-.02,0-.03,0,0,0-.02,0-.02.02v.08s0,0,0,0c0,.02.01.02.02.02,0,0,.02,0,.03,0,0,0,0,0,.01,0,.03,0,.07,0,.09,0h.08c0,.06-.05.11-.14.16-.02.01-.05.03-.08.04h0s-.02,0-.03.01c0,0,0,0-.01.01,0,0,0,.01,0,.02l.07.07Z"/><path d="M1.47.13s.01,0,.02,0c0,0,.01,0,.01,0,.03,0,.07,0,.09,0h.03s.06,0,.09,0c0,0,0,0,.01,0,0,0,.02,0,.02,0,0,0,.02,0,.02-.02V.03s0,0,0,0c0-.02-.01-.02-.02-.02s-.1.01-.13.01h-.03s-.06,0-.09,0c0,0,0,0-.01,0,0,0-.02,0-.02,0,0,0-.02,0-.02.02v.08s0,0,0,0c0,.02.01.02.02.02Z"/><path d="M2.16.06h0s0,0,0-.01c0,0,0-.02,0-.03,0,0,0-.02-.02-.02h-.09s0,0,0,0c-.02,0-.02.01-.02.02s0,.01,0,.02c0,0,0,.01,0,.02,0,.03,0,.07,0,.09v.84s0,.06,0,.09c0,0,0,0,0,.01,0,0,0,.02,0,.02,0,0,0,.02.02.02h.09s0,0,0,0c.02,0,.02-.01.02-.02,0,0,0-.02,0-.03,0,0,0,0,0-.01,0-.03,0-.07,0-.09V.15s0-.06,0-.09Z"/><path d="M1.95.62s-.02,0-.03,0h0s-.07.02-.1.02c-.11.01-.25.02-.41.02-.03,0-.06,0-.09,0h0s-.03,0-.04,0c0,0-.01,0-.02,0,0,0,0,0,0,.01v.09s.02,0,.02,0c.08,0,.16,0,.28,0,0,.02,0,.04,0,.06v.15s0,.06,0,.09c0,0,0,0,0,.01,0,0,0,.02,0,.03s0,.02.02.02h.09s0,0,0,0c.02,0,.02-.01.02-.02s0-.01,0-.02c0,0,0-.01,0-.01,0-.03,0-.07,0-.09v-.16s0-.03,0-.05c.12,0,.22-.02.31-.04h0s0-.09,0-.09c0-.01-.01-.02-.03-.02Z"/><path d="M3.32,1.13s0-.07,0-.09v-.2s-.01-.02-.02-.02c0,0-.02,0-.02,0,0,0-.01,0-.01,0-.03,0-.07,0-.09,0h-.41s-.06,0-.09,0c0,0,0,0-.01,0,0,0-.02,0-.02,0,0,0-.02,0-.02.02v.08s.01.02.02.02c0,0,.01,0,.02,0,0,0,.01,0,.01,0,.03,0,.07,0,.09,0h.45s0,.11,0,.11c0,.02,0,.06,0,.09,0,0,0,0,0,.01,0,0,0,.02,0,.03,0,.01,0,.02.02.02h.09s.02-.01.02-.02c0,0,0-.01,0-.02,0,0,0-.01,0-.02Z"/><path d="M3.43.62s-.01,0-.02,0c0,0-.01,0-.01,0-.03,0-.07,0-.09,0h-.28s0-.03,0-.05v-.03s0-.01,0-.02h.16s.06,0,.09,0c0,0,0,0,.01,0,0,0,.02,0,.03,0,0,0,.02,0,.02-.02v-.08s-.01-.02-.02-.02c0,0-.02,0-.02,0,0,0-.01,0-.01,0-.03,0-.07,0-.09,0h-.45s0-.04,0-.05v-.06s.56,0,.56,0c.02,0,.02-.01.02-.02,0,0,0-.02,0-.03,0,0,0,0,0-.01,0-.03,0-.07,0-.09V.03s-.01-.02-.02-.02c0,0-.02,0-.03,0,0,0,0,0-.01,0-.03,0-.07,0-.09,0h-.39s-.06,0-.09,0c0,0,0,0-.01,0,0,0-.02,0-.03,0,0,0-.02,0-.02.02v.08s0,.02.02.02c0,0,.02,0,.02,0,0,0,.01,0,.01,0,.03,0,.07,0,.09,0h.39s.03,0,.04,0v.11s-.56,0-.56,0c-.02,0-.02.01-.02.02,0,0,0,.01,0,.02,0,0,0,.01,0,.02,0,.03,0,.07,0,.09h0s0,.07,0,.09c0,0,0,0,0,.01,0,0,0,.02,0,.02,0,0,0,.02.02.02h.28s0,.01,0,.02v.03s0,.03,0,.05h-.29s-.06,0-.09,0c0,0,0,0-.01,0,0,0-.02,0-.02,0,0,0-.02,0-.02.02v.08s.01.02.02.02c0,0,.02,0,.02,0,0,0,.01,0,.01,0,.03,0,.07,0,.09,0h.68s.06,0,.09,0c0,0,0,0,.01,0,0,0,.02,0,.02,0,0,0,.02,0,.02-.02v-.08s-.01-.02-.02-.02Z"/>
+        </svg>
+      </div>
+
+      <!-- 정보 패널 -->
+      <div class="lb-info">
+        <div class="lb-info-block">
+          <div class="lb-info-row"><span class="lb-info-key">Scientific Name</span><span class="lb-info-val" id="lSci">—</span></div>
+          <div class="lb-info-row"><span class="lb-info-key">Common Name</span><span class="lb-info-val" id="lCommon">—</span></div>
+          <div class="lb-info-row"><span class="lb-info-key">Local Name</span><span class="lb-info-val" id="lKo">—</span></div>
+          <div class="lb-info-row"><span class="lb-info-key">Native Habitat</span><span class="lb-info-val" id="lHabitat">—</span></div>
+        </div>
+        <div class="lb-info-divider"></div>
+        <div class="lb-info-block">
+          <div class="lb-info-row"><span class="lb-info-key">Sun 햇빛</span><span class="lb-info-val" id="lSun">—</span></div>
+          <div class="lb-info-row"><span class="lb-info-key">Water 물주기</span><span class="lb-info-val" id="lWater">—</span></div>
+          <div class="lb-info-row"><span class="lb-info-key">Temperature 온도</span><span class="lb-info-val" id="lTemp">—</span></div>
+          <div class="lb-info-row"><span class="lb-info-key">Humidity 습도</span><span class="lb-info-val" id="lHumid">—</span></div>
+          <div class="lb-info-row"><span class="lb-info-key">Air 통풍</span><span class="lb-info-val" id="lAir">—</span></div>
         </div>
       </div>
-      <div class="lb-drw"><img id="lImg" src="" alt=""></div>
-      <div class="lb-grid">
-        <div><div class="lb-key">물 주기</div><div class="lb-val" id="lWater">—</div></div>
-        <div><div class="lb-key">햇빛</div><div class="lb-val" id="lSun">—</div></div>
-        <div><div class="lb-key">최적 온도</div><div class="lb-val" id="lTemp">—</div></div>
-        <div><div class="lb-key">통풍</div><div class="lb-val" id="lAir">—</div></div>
+
+      <!-- 이미지 + QR -->
+      <div class="lb-img-area">
+        <div class="lb-img-inner">
+          <img id="lImg" src="" alt="" style="display:none">
+          <div class="lb-img-placeholder" id="lImgPlaceholder"></div>
+        </div>
+        <div id="lQR"></div>
       </div>
-      <div class="lb-copy" id="lCopy">—</div>
-      <div class="lb-foot">
+
+      <!-- 브랜딩 N/og SVG -->
+      <div class="lb-brand">
+        <svg class="lb-brand-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3.37 4.85">
+          <path d="M2.57,2.69c.07-.19.08-.48,0-.68-.16-.44-.74-.42-.86.03-.08.27-.07.68.17.87.23.19.59.06.69-.22h0ZM2.14,2.8c-.29,0-.27-.36-.26-.57,0-.44.54-.43.54,0,0,.21.03.55-.26.56h0Z"/><path d="M3.27,4.21c-.14-.14-.42-.07-.61-.11-.05-.01-.06-.08-.03-.12.07-.08.17-.04.26-.05.21-.02.35-.22.35-.42,0-.11-.02-.22-.08-.3-.02-.02-.04-.07,0-.08.05-.02.16.02.19.02.01,0,0-.03,0-.07,0-.05,0-.14,0-.17,0-.04-.02-.03-.05-.02-.05.02-.11.02-.16.02-.06,0-.12.04-.13.11-.01.06-.05.05-.1.04-.45-.1-.67.46-.38.77,0,0,.03.03.02.04-.01.04-.07.05-.09.09-.05.06-.06.18-.02.24,0,.02.04.05.04.07,0,.02-.05.04-.08.07-.11.13-.07.35.07.43.19.11.59.09.75-.03.16-.11.17-.4.04-.53h0ZM2.63,3.46c0-.13.1-.22.23-.21.18,0,.2.17.18.31,0,.16-.17.23-.31.17-.1-.04-.11-.17-.1-.26h0ZM3.11,4.6c-.08.05-.24.05-.34.05-.06,0-.15,0-.18-.06-.06-.07-.05-.21.04-.25.08,0,.19,0,.28,0,.07,0,.15,0,.21.03.08.04.07.19,0,.24h0Z"/><path d="M.98,0s-.21,0-.25,0c-.02,0,0,.02,0,.06.01.05.02.11.02.16,0,.1,0,1.01,0,1.08,0,.03-.03-.09-.09-.26-.1-.3-.26-.77-.28-.82-.02-.05-.03-.11-.03-.16,0-.06,0-.06-.05-.06-.08,0-.16,0-.24,0C-.04,0,.01.02.02.11c0,.04,0,.08,0,.11,0,.18.01,1.2,0,1.36,0,.02,0,.04-.01.06,0,.03-.02.04,0,.05.02,0,.06,0,.11,0,.06,0,.1,0,.13,0,0,0,0-.01,0-.03-.05-.19-.02-.24-.03-.5,0-.18,0-.63,0-.75.01.04.05.14.1.29.1.3.25.73.27.78.02.05.04.13.04.19,0,.02,0,.03.02.03.06,0,.25,0,.31,0,.03,0,0-.05-.01-.11,0-.04,0-.08,0-.12,0-.14,0-1.14,0-1.24,0-.04,0-.11.02-.16,0-.03.02-.04.01-.05h0Z"/><path d="M1.91.16s.04-.1.07-.13c0,0,.01-.01.01-.02-.02-.01-.07,0-.14,0-.05,0-.1,0-.12,0-.02,0-.02.01-.02.03,0,.05-.01.14-.03.19-.06.17-.46,1.69-.56,1.85-.02.04.07.02.12.02.05,0,.1,0,.12,0,.04,0,.02-.01.03-.07,0-.05.01-.11.03-.15.08-.29.4-1.37.49-1.71h0Z"/>
+        </svg>
+      </div>
+
+      <!-- 케어노트 + 날짜 -->
+      <div class="lb-right">
+        <div class="lb-care-notes" id="lCareNotes">—</div>
         <div class="lb-date" id="lDate">—</div>
-        <div class="lb-bar" id="lBar"></div>
+      </div>
+
+      <!-- 오른쪽 접힘 + 원형 로고 SVG -->
+      <div class="lb-fold-r">
+        <svg class="lb-stamp-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16.23 19.65">
+          <path d="M8.48,5.75c.01-.23.05-.49.08-.67.01-.12,0-.17-.04-.18-.13-.03-.96-.02-1.12,0-.1.02-.1.06-.07.21.06.26.11.67.11.96,0,.57,0,5.5,0,5.68-.37-.97-1.85-5.39-1.99-5.78-.07-.17-.17-.6-.18-.86-.03-.38-.36-.19-.67-.23-.31,0-.78-.03-1.06.03-.12.02.02.3.05.67.01.14.03.35.03.48-.02.9.04,6.2-.03,7.05-.02.14-.04.34-.07.47-.03.15-.03.19.07.21.2.02,1.05.03,1.15-.01.08-.03.04-.14,0-.37-.05-.27-.08-.67-.07-.85.03-.27-.05-4.92.02-5.56.05.13.21.6.42,1.22.74,2.28,1.58,4.28,1.76,5.44.03.11.07.12.18.13.23,0,1.19,0,1.41,0,.24,0,.05-.26.04-.69,0-.08-.02-.25-.02-.33,0-.68,0-5.27,0-6.98v-.05Z"/><path d="M12.91,5.6c.02-.06.14-.38.15-.39.02-.08.14-.27.07-.31-.1-.04-1.03-.02-1.2-.01-.1.01-.11.06-.11.22,0,.19-.05.5-.11.73-.17.58-2.03,6.71-2.65,8.77-.18.56-.17.64-.36,1-.04.07-.14.21-.1.27.29.08,1.07.03,1.37.02.09-.03.1-.12.09-.32,0-.27.15-.68.21-.94.11-.38,2.1-7.24,2.62-9v-.04Z"/><path d="M14.16,3.56c-1.49-2.17-3.54-3.56-6.05-3.56S3.54,1.39,2.05,3.58C.89,5.28,0,7.45,0,9.82s.89,4.55,2.05,6.25c1.49,2.18,3.55,3.58,6.06,3.58s4.58-1.39,6.06-3.58c1.16-1.7,2.05-3.88,2.05-6.25s-.9-4.57-2.07-6.27ZM14.72,10.93c-1.98,13.71-16.38,7.36-12.69-4.5C4.75-3.79,16.07,1.72,14.72,10.93Z"/>
+        </svg>
       </div>
     </div>
 
@@ -1122,15 +1343,12 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
     "habitatKo": "마다가스카르 원산의 건조 열대 관목지",
     "water": "Every 14–21 days / 2–3주에 1회",
     "temp": "18–28°C",
-    "sun": "밝은 간접광~반음지",
+    "sun": "Bright Indirect to Partial Shade / 밝은 간접광–반음지",
     "humid": "40–60%",
-    "air": "보통",
+    "air": "Moderate / 보통",
     "copy": "구불한 목대에서 설픻 피어나는 초록 분수.",
-    "description": "밝은 간접광이나 반음지에 두어주세요.
-흙이 완전히 마른 후에 물을 주세요.
-물주기는 보통 2–3주에 한 번이에요.
-잎 끝이 갈색으로 변하면 건조 신호예요.
-직사광선은 잎을 태울 수 있어요.",
+    "description": "밝은 간접광이나 반음지에 두어주세요. / 흙이 완전히 마른 후에 물을 주세요. / 물주기는 보통 2–3주에 한 번이에요. / 잎 끝이 갈색으로 변하면 건조 신호예요. / 직사광선은 잎을 태울 수 있어요.",
+    "notionUrl": "https://notion.so/3826a7eb0d73810999fecf8aee970e0b",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716257/nokchilog/sv2dqqpuj31vjgiue4ig.jpg",
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716260/nokchilog/jfxoe48bswghw7l9nj2t.jpg"
@@ -1145,15 +1363,12 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
     "habitatKo": "인도·중국 남부·인도차이나의 습윤 열대림",
     "water": "Every 5–7 days / 5–7일에 1회",
     "temp": "18–26°C",
-    "sun": "밝은 간접광",
+    "sun": "Bright, Indirect Light / 밝은 간접광",
     "humid": "50–70%",
-    "air": "보통",
+    "air": "Moderate / 보통",
     "copy": "잎이 갈라질수록 깊어지는 것들.",
-    "description": "밝은 간접광이 드는 곳에 두어주세요.
-겉흙이 마르면 물을 충분히 주세요.
-물주기는 보통 5–7일에 한 번이에요.
-잎이 늘어지면 물이 부족하다는 신호예요.
-찬바람과 낮은 온도는 피해 주세요.",
+    "description": "밝은 간접광이 드는 곳에 두어주세요. / 겉흙이 마르면 물을 충분히 주세요. / 물주기는 보통 5–7일에 한 번이에요. / 잎이 늘어지면 물이 부족하다는 신호예요. / 찬바람과 낮은 온도는 피해 주세요.",
+    "notionUrl": "https://notion.so/3826a7eb0d7381c2a840ea8db3b07f77",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716262/nokchilog/ps0dgqupxpwgafj2ndxx.jpg",
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716264/nokchilog/t31zf2yxdpulaiwxua6k.jpg"
@@ -1168,15 +1383,12 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
     "habitatKo": "남아프리카 동부의 아열대 삼림 가장자리",
     "water": "Every 3–4 days / 3–4일에 1회",
     "temp": "15–25°C",
-    "sun": "밝은 간접광~반음지",
+    "sun": "Bright Indirect to Partial Shade / 밝은 간접광–반음지",
     "humid": "50–70%",
-    "air": "보통",
+    "air": "Moderate / 보통",
     "copy": "가느다란 것들의 고집.",
-    "description": "밝은 간접광이 드는 곳에 두어주세요.
-겉흙이 마르면 물을 충분히 주세요.
-물주기는 보통 3–4일에 한 번이에요.
-잎이 노랗게 변한 부분은 떼어내주세요.
-건조한 환경에선 분무를 자주 해주세요.",
+    "description": "밝은 간접광이 드는 곳에 두어주세요. / 겉흙이 마르면 물을 충분히 주세요. / 물주기는 보통 3–4일에 한 번이에요. / 잎이 노랗게 변한 부분은 떼어내주세요. / 건조한 환경에선 분무를 자주 해주세요.",
+    "notionUrl": "https://notion.so/3826a7eb0d7381269d66ffac60f4486d",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716200/nokchilog/qnkat1ngyitckvfqqsz8.jpg"
     ]
@@ -1190,15 +1402,12 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
     "habitatKo": "중남미 열대우림 원산의 원예 교배종",
     "water": "Every 7 days / 7일에 1회",
     "temp": "18–28°C",
-    "sun": "밝은 간접광",
+    "sun": "Bright, Indirect Light / 밝은 간접광",
     "humid": "50–70%",
-    "air": "보통",
+    "air": "Moderate / 보통",
     "copy": "무늬는 우연이 아니다.",
-    "description": "밝은 간접광이 드는 곳에 두어주세요.
-겉흙 2–3cm가 마르면 물을 주세요.
-물주기는 보통 7일에 한 번이에요.
-잎이 뒤로 말리면 습도 부족 신호예요.
-직사광선은 무늬를 손상시킬 수 있어요.",
+    "description": "밝은 간접광이 드는 곳에 두어주세요. / 겉흙 2–3cm가 마르면 물을 주세요. / 물주기는 보통 7일에 한 번이에요. / 잎이 뒤로 말리면 습도 부족 신호예요. / 직사광선은 무늬를 손상시킬 수 있어요.",
+    "notionUrl": "https://notion.so/3826a7eb0d738177b9fce8bbc28a5db4",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781716202/nokchilog/ui6c5oc8x9u7i63vhlup.jpg"
     ]
@@ -1212,15 +1421,12 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
     "habitatKo": "한국·중국·일본의 온난 해안림과 산지 삼림",
     "water": "Every 5–7 days / 5–7일에 1회",
     "temp": "5–25°C",
-    "sun": "밝은 간접광~반음지",
+    "sun": "Bright Indirect to Partial Shade / 밝은 간접광–반음지",
     "humid": "50–70%",
-    "air": "보통",
+    "air": "Moderate / 보통",
     "copy": "가장 추운 계절에 피는 것들.",
-    "description": "밝은 간접광이 드는 서늘한 곳에 두어주세요.
-겉흙이 마르면 물을 충분히 주세요.
-물주기는 보통 5–7일에 한 번이에요.
-꽃봉오리 맺힐 때 장소 이동은 피해주세요.
-겨울엔 물주기 간격을 늘려주세요.",
+    "description": "밝은 간접광이 드는 서늘한 곳에 두어주세요. / 겉흙이 마르면 물을 충분히 주세요. / 물주기는 보통 5–7일에 한 번이에요. / 꽃봉오리 맺힐 때 장소 이동은 피해주세요. / 겨울엔 물주기 간격을 늘려주세요.",
+    "notionUrl": "https://notion.so/3826a7eb0d738190b0a5f4b1f5506921",
     "images": [
       "https://res.cloudinary.com/dtxht4cnf/image/upload/v1781714887/nokchilog/rpkgopua5wa2z1fce4mm.jpg"
     ]
@@ -1230,8 +1436,8 @@ let plants = JSON.parse(localStorage.getItem('nkl_v4') || 'null') || [
 let selectedPlant = null;
 let fromScreen = 'screenMain';
 let currentTool = 'draw';
-let currentColor = '#FFFFFF';
-const colors = ['#FFFFFF','#3D5A3E','#8B6F47','#555555'];
+let currentColor = '#000000';
+const colors = ['#000000','#333333','#666666','#999999'];
 let isDrawing = false, lastX = 0, lastY = 0;
 let searchOpen = false;
 
@@ -1491,7 +1697,7 @@ function renderList(list) {
           <span class="item-caption-row"><span class="lbl">LOCAL NAME / </span>${p.local || p.nameKo}</span>
           <span class="item-caption-row"><span class="lbl">SCIENTIFIC NAME / </span>${p.scientific || p.nameEn}</span>
           <span class="item-caption-row"><span class="lbl">COMMON NAME / </span>${p.common || '—'}</span>
-          <span class="item-caption-row"><span class="lbl">NATIVE HABITAT / </span>${p.habitat || '—'}</span>
+          <span class="item-caption-row"><span class="lbl">NATIVE HABITAT / </span>${p.habitatEn || p.habitat || '—'}</span>
         </div>
       </div>
     `;
@@ -1618,10 +1824,78 @@ function selectPlant(id, from) {
 
 function detailBack() { showScreen(fromScreen); }
 
+let drwMode = 'stamp';
+let stampInverted = false;
+let stampImgEl = null;
+
+function setDrwMode(mode) {
+  drwMode = mode;
+  document.getElementById('tabStamp').classList.toggle('on', mode === 'stamp');
+  document.getElementById('tabDraw').classList.toggle('on', mode === 'draw');
+  document.getElementById('stampWrap').style.display = mode === 'stamp' ? '' : 'none';
+  document.getElementById('drawWrap').style.display = mode === 'draw' ? '' : 'none';
+  if (mode === 'draw') setTimeout(initCanvas, 40);
+}
+
+function initStamp() {
+  if (!selectedPlant || !selectedPlant.images || !selectedPlant.images.length) return;
+  const thumbs = document.getElementById('stampThumbs');
+  thumbs.innerHTML = selectedPlant.images.map((src, i) =>
+    `<img class="stamp-thumb${i===0?' on':''}" src="${src}" crossorigin="anonymous" onclick="selectStampImg(this,'${src}')">`
+  ).join('');
+  stampInverted = false;
+  loadStampImg(selectedPlant.images[0]);
+}
+
+function loadStampImg(src) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => { stampImgEl = img; applyStamp(); };
+  img.src = src;
+}
+
+function selectStampImg(el, src) {
+  document.querySelectorAll('.stamp-thumb').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  loadStampImg(src);
+}
+
+function applyStamp() {
+  if (!stampImgEl) return;
+  const c = document.getElementById('stampCanvas');
+  const threshold = parseInt(document.getElementById('threshSlider').value);
+  const W = c.offsetWidth; const H = c.offsetHeight;
+  c.width = W * devicePixelRatio; c.height = H * devicePixelRatio;
+  c.style.width = W + 'px'; c.style.height = H + 'px';
+  const ctx = c.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  // draw image scaled to fill
+  const iw = stampImgEl.naturalWidth, ih = stampImgEl.naturalHeight;
+  const scale = Math.max(W/iw, H/ih);
+  const sw = iw*scale, sh = ih*scale;
+  ctx.drawImage(stampImgEl, (W-sw)/2, (H-sh)/2, sw, sh);
+
+  // threshold → B&W stamp
+  const d = ctx.getImageData(0, 0, c.width, c.height);
+  for (let i = 0; i < d.data.length; i += 4) {
+    const lum = d.data[i]*0.299 + d.data[i+1]*0.587 + d.data[i+2]*0.114;
+    const on = stampInverted ? lum < threshold : lum >= threshold;
+    const v = on ? 255 : 0;
+    d.data[i] = d.data[i+1] = d.data[i+2] = v;
+  }
+  ctx.putImageData(d, 0, 0);
+}
+
+function invertStamp() {
+  stampInverted = !stampInverted;
+  applyStamp();
+}
+
 function goDrawing() {
-  clearCanvas();
   showScreen('screenDrawing');
-  setTimeout(initCanvas, 80);
+  setDrwMode('stamp');
+  setTimeout(initStamp, 80);
 }
 
 // ══════════════════════════════
@@ -1634,7 +1908,7 @@ function initCanvas() {
   c.height = r.height * devicePixelRatio;
   const ctx = c.getContext('2d');
   ctx.scale(devicePixelRatio, devicePixelRatio);
-  ctx.fillStyle = '#111'; ctx.fillRect(0,0,r.width,r.height);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,r.width,r.height);
 }
 
 const dc = document.getElementById('drawCanvas');
@@ -1649,7 +1923,7 @@ dc.addEventListener('mousemove', e=>{
   if(!isDrawing)return;
   const ctx=dc.getContext('2d');const p=getPos(e,dc);const sz=parseInt(document.getElementById('bSz').value);
   ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);
-  ctx.strokeStyle=currentTool==='erase'?'#111':currentColor;
+  ctx.strokeStyle=currentTool==='erase'?'#fff':currentColor;
   ctx.lineWidth=currentTool==='erase'?sz*3:sz;
   ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
   lastX=p.x;lastY=p.y;
@@ -1661,7 +1935,7 @@ dc.addEventListener('touchmove',e=>{
   e.preventDefault();if(!isDrawing)return;
   const ctx=dc.getContext('2d');const p=getPos(e,dc);const sz=parseInt(document.getElementById('bSz').value);
   ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);
-  ctx.strokeStyle=currentTool==='erase'?'#111':currentColor;
+  ctx.strokeStyle=currentTool==='erase'?'#fff':currentColor;
   ctx.lineWidth=currentTool==='erase'?sz*3:sz;
   ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
   lastX=p.x;lastY=p.y;
@@ -1671,7 +1945,7 @@ dc.addEventListener('touchend',()=>isDrawing=false);
 function clearCanvas() {
   const c=document.getElementById('drawCanvas');
   const ctx=c.getContext('2d');
-  ctx.fillStyle='#111';ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
 }
 function setTool(t) {
   currentTool=t;
@@ -1689,19 +1963,57 @@ function setColor(i) {
 // ══════════════════════════════
 function goPreview() {
   if (!selectedPlant) return;
-  document.getElementById('lKo').textContent = selectedPlant.nameKo;
-  document.getElementById('lEn').textContent = selectedPlant.nameEn;
-  document.getElementById('lWater').textContent = selectedPlant.water;
-  document.getElementById('lSun').textContent = selectedPlant.sun;
-  document.getElementById('lTemp').textContent = selectedPlant.temp;
-  document.getElementById('lAir').textContent = selectedPlant.air;
-  document.getElementById('lCopy').textContent = selectedPlant.copy;
+  const p = selectedPlant;
+
+  document.getElementById('lSci').textContent    = p.nameEn || '—';
+  document.getElementById('lCommon').textContent = p.common || '—';
+  document.getElementById('lKo').textContent     = p.nameKo || '—';
+  document.getElementById('lHabitat').textContent= p.habitatEn || p.habitat || '—';
+  document.getElementById('lSun').textContent    = p.sun || '—';
+  document.getElementById('lWater').textContent  = p.water || '—';
+  document.getElementById('lTemp').textContent   = p.temp || '—';
+  document.getElementById('lHumid').textContent  = p.humid || '—';
+  document.getElementById('lAir').textContent    = p.air || '—';
+
+  // care notes: ' / ' → 줄바꿈
+  document.getElementById('lCareNotes').innerHTML =
+    (p.description || '—').split(' / ').map(s => s.trim()).join('<br>');
+
   const now = new Date();
   document.getElementById('lDate').textContent =
     `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-  document.getElementById('lImg').src = document.getElementById('drawCanvas').toDataURL('image/png');
-  document.getElementById('lBar').innerHTML =
-    [14,9,14,6,12,9,14,7,12,14,9].map(h=>`<span style="height:${h}px"></span>`).join('');
+
+  // QR 코드
+  const qrEl = document.getElementById('lQR');
+  qrEl.innerHTML = '';
+  if (p.notionUrl && typeof QRCode !== 'undefined') {
+    new QRCode(qrEl, {
+      text: p.notionUrl,
+      width: 32, height: 32,
+      colorDark: '#111111', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  // 이미지
+  const activeCanvas = drwMode === 'stamp'
+    ? document.getElementById('stampCanvas')
+    : document.getElementById('drawCanvas');
+  const imgEl = document.getElementById('lImg');
+  const placeholder = document.getElementById('lImgPlaceholder');
+  // 캔버스에 실제 그림이 있는지 확인 (불투명 픽셀 존재 여부)
+  const ctx = activeCanvas.getContext('2d');
+  const px = ctx.getImageData(0, 0, activeCanvas.width, activeCanvas.height).data;
+  const hasContent = px.some((v, i) => i % 4 === 3 && v > 10);
+  if (hasContent) {
+    imgEl.src = activeCanvas.toDataURL('image/png');
+    imgEl.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+  } else {
+    imgEl.style.display = 'none';
+    if (placeholder) placeholder.style.removeProperty('display');
+  }
+
   showScreen('screenPreview');
 }
 
